@@ -9,12 +9,7 @@ import java.io.BufferedReader;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.math.BigInteger;
-import java.security.InvalidAlgorithmParameterException;
-import java.security.InvalidKeyException;
-import java.security.KeyPair;
-import java.security.KeyPairGenerator;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
+import java.security.*;
 import java.security.spec.InvalidKeySpecException;
 
 public class CryptoUtils {
@@ -48,4 +43,28 @@ public class CryptoUtils {
 
         return MessageDigest.getInstance("SHA-256").digest(userKeyAgree.generateSecret());
     }
+
+    public static KeyPair buildKeyPair() throws NoSuchAlgorithmException {
+        final int keySize = 2048;
+        KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance("RSA");
+        keyPairGenerator.initialize(keySize);
+
+        return keyPairGenerator.genKeyPair();
+    }
+
+    public static byte[] sign(byte[] data, PrivateKey key) throws Exception{
+        Signature rsa = Signature.getInstance("SHA1withRSA");
+        rsa.initSign(key);
+        rsa.update(data);
+        return rsa.sign();
+    }
+
+    public static boolean verifySignature(byte[] data, byte[] signature, PublicKey key) throws Exception {
+        Signature sig = Signature.getInstance("SHA1withRSA");
+        sig.initVerify(key);
+        sig.update(data);
+
+        return sig.verify(signature);
+    }
+
 }

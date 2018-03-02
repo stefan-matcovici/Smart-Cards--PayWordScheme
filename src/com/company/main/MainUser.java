@@ -14,7 +14,7 @@ import java.security.spec.InvalidKeySpecException;
 
 public class MainUser {
 
-    public static void main(String[] args) throws IOException, NoSuchAlgorithmException, InvalidKeySpecException, InvalidAlgorithmParameterException, NoSuchProviderException, InvalidKeyException, NoSuchPaddingException, BadPaddingException, IllegalBlockSizeException {
+    public static void main(String[] args) throws Exception {
         User user = new User();
         user.registerToBroker();
     }

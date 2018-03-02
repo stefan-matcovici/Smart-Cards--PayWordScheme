@@ -1,5 +1,6 @@
 package com.company;
 
+import com.company.main.SignedCertificate;
 import com.company.models.Identity;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -17,22 +18,20 @@ import java.security.*;
 import java.security.spec.InvalidKeySpecException;
 import java.util.Base64;
 
+import static com.company.utils.CryptoUtils.buildKeyPair;
 import static com.company.utils.CryptoUtils.getDiffieHellmanComputedSecret;
+import static com.company.utils.CryptoUtils.sign;
 
 public class User {
     private static final int BROKER_SERVER_PORT = 6789;
     private PrivateKey privateKey;
+    private ObjectMapper objectMapper;
 
-    public KeyPair buildKeyPair() throws NoSuchAlgorithmException {
-        final int keySize = 2048;
-        KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance("RSA");
-        keyPairGenerator.initialize(keySize);
-
-        return keyPairGenerator.genKeyPair();
+    public User() {
+        objectMapper = new ObjectMapper();
     }
 
-    public void registerToBroker() throws IOException, NoSuchAlgorithmException,
-            InvalidAlgorithmParameterException, InvalidKeyException, InvalidKeySpecException, NoSuchPaddingException, BadPaddingException, IllegalBlockSizeException {
+    public void registerToBroker() throws Exception {
         Socket userSocket = new Socket("localhost", BROKER_SERVER_PORT);
 
         DataOutputStream outToBroker = new DataOutputStream(userSocket.getOutputStream());
@@ -51,7 +50,7 @@ public class User {
         identity.setAlgorithm("RSA");
         identity.setPublicKeyByteArray(pubKey);
 
-        String identityString = new ObjectMapper().writeValueAsString(identity);
+        String identityString = objectMapper.writeValueAsString(identity);
 
         Cipher cipher = Cipher.getInstance("AES");
         SecretKeySpec keySpec = new SecretKeySpec(commonKey, "AES");
@@ -60,6 +59,13 @@ public class User {
         byte[] encryptedIdentityString = cipher.doFinal(identityString.getBytes());
 
         outToBroker.writeBytes(Base64.getEncoder().encodeToString(encryptedIdentityString) +"\n");
+
+        SignedCertificate signedCertificate = objectMapper.readValue(inFromBroker.readLine(), SignedCertificate.class);
+
+        signedCertificate.getPlainCertificate().getCertifierIdentity().setIdentity("jfmad");
+
+        System.out.println(signedCertificate.verifySignature());
+
 
         userSocket.close();
     }
