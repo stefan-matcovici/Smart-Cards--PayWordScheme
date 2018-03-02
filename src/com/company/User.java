@@ -3,6 +3,11 @@ package com.company;
 import com.company.models.Identity;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import javax.crypto.BadPaddingException;
+import javax.crypto.Cipher;
+import javax.crypto.IllegalBlockSizeException;
+import javax.crypto.NoSuchPaddingException;
+import javax.crypto.spec.SecretKeySpec;
 import java.io.BufferedReader;
 import java.io.DataOutputStream;
 import java.io.IOException;
@@ -10,6 +15,7 @@ import java.io.InputStreamReader;
 import java.net.Socket;
 import java.security.*;
 import java.security.spec.InvalidKeySpecException;
+import java.util.Base64;
 
 import static com.company.utils.CryptoUtils.getDiffieHellmanComputedSecret;
 
@@ -25,16 +31,14 @@ public class User {
         return keyPairGenerator.genKeyPair();
     }
 
-    public void registerToBroker() throws IOException, NoSuchAlgorithmException, NoSuchProviderException,
-            InvalidAlgorithmParameterException, InvalidKeyException, InvalidKeySpecException {
+    public void registerToBroker() throws IOException, NoSuchAlgorithmException,
+            InvalidAlgorithmParameterException, InvalidKeyException, InvalidKeySpecException, NoSuchPaddingException, BadPaddingException, IllegalBlockSizeException {
         Socket userSocket = new Socket("localhost", BROKER_SERVER_PORT);
 
         DataOutputStream outToBroker = new DataOutputStream(userSocket.getOutputStream());
         BufferedReader inFromBroker = new BufferedReader(new InputStreamReader(userSocket.getInputStream()));
 
-        final String secret = getDiffieHellmanComputedSecret(outToBroker, inFromBroker);
-
-        System.out.println(secret);
+        final byte[] commonKey = getDiffieHellmanComputedSecret(outToBroker, inFromBroker);
 
         KeyPair keyPair = buildKeyPair();
         byte[] pubKey = keyPair.getPublic().getEncoded();
@@ -49,7 +53,13 @@ public class User {
 
         String identityString = new ObjectMapper().writeValueAsString(identity);
 
-        outToBroker.writeBytes(identityString +"\n");
+        Cipher cipher = Cipher.getInstance("AES");
+        SecretKeySpec keySpec = new SecretKeySpec(commonKey, "AES");
+        cipher.init(Cipher.ENCRYPT_MODE, keySpec);
+
+        byte[] encryptedIdentityString = cipher.doFinal(identityString.getBytes());
+
+        outToBroker.writeBytes(Base64.getEncoder().encodeToString(encryptedIdentityString) +"\n");
 
         userSocket.close();
     }

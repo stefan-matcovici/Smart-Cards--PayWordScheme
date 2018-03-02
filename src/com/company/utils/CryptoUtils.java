@@ -22,14 +22,14 @@ public class CryptoUtils {
     private static BigInteger p512 = new BigInteger("1234567890", 16);
     public static DHParameterSpec dhParams = new DHParameterSpec(p512, g512);
 
-    public static KeyPairGenerator getKeyGen() throws NoSuchAlgorithmException, InvalidAlgorithmParameterException {
+    public static KeyPairGenerator getKeyGen() throws NoSuchAlgorithmException {
         final KeyPairGenerator dh = KeyPairGenerator.getInstance("DH");
         dh.initialize(2048);
 
         return dh;
     }
 
-    public static String getDiffieHellmanComputedSecret(DataOutputStream outToBroker, BufferedReader inFromBroker) throws NoSuchAlgorithmException, InvalidAlgorithmParameterException, InvalidKeyException, IOException, InvalidKeySpecException {
+    public static byte[] getDiffieHellmanComputedSecret(DataOutputStream outToBroker, BufferedReader inFromBroker) throws NoSuchAlgorithmException, InvalidAlgorithmParameterException, InvalidKeyException, IOException, InvalidKeySpecException {
         KeyAgreement userKeyAgree = KeyAgreement.getInstance("DH");
         KeyPair userKeyPair = getKeyGen().generateKeyPair();
 
@@ -46,8 +46,6 @@ public class CryptoUtils {
 
         userKeyAgree.doPhase(recievedDiffieHellmanBrokerPublicKey.computePublicKey(), true);
 
-        MessageDigest hash = MessageDigest.getInstance("SHA1");
-
-        return new String(hash.digest(userKeyAgree.generateSecret()));
+        return MessageDigest.getInstance("SHA-256").digest(userKeyAgree.generateSecret());
     }
 }
