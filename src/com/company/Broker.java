@@ -8,7 +8,9 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.security.NoSuchAlgorithmException;
 import java.security.PublicKey;
+import java.security.spec.InvalidKeySpecException;
 
 public class Broker {
     private static final int BROKER_SERVER_PORT = 6789;
@@ -18,7 +20,7 @@ public class Broker {
         brokerServerSocket = new ServerSocket(BROKER_SERVER_PORT);
     }
 
-    public void registerUser() throws IOException {
+    public void registerUser() throws IOException, NoSuchAlgorithmException, InvalidKeySpecException {
         Socket userConnectionSocket = brokerServerSocket.accept();
 
         BufferedReader inFromClient =
@@ -28,9 +30,10 @@ public class Broker {
 
 
         final Identity identity = new ObjectMapper().readValue(messageFromUser, Identity.class);
-        System.out.println(identity);
-        PublicKey publicKey = identity.getPublicKey();
-        System.out.println(publicKey);
+        PublicKey pk = identity.computePublicKey();
+
+        System.out.println(pk.toString());
+
 
         userConnectionSocket.close();
     }

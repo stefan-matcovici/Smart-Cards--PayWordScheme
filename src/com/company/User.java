@@ -27,16 +27,17 @@ public class User {
         DataOutputStream outToServer = new DataOutputStream(userSocket.getOutputStream());
 
         KeyPair keyPair = buildKeyPair();
-        PublicKey pubKey = keyPair.getPublic();
+        byte[] pubKey = keyPair.getPublic().getEncoded();
         privateKey = keyPair.getPrivate();
+
+        System.out.println(keyPair.getPublic().toString());
 
         Identity identity = new Identity();
         identity.setIdentity("User");
-        identity.setPublicKey(pubKey);
+        identity.setAlgorithm("RSA");
+        identity.setPublicKeyByteArray(pubKey);
 
         String identityString = new ObjectMapper().writeValueAsString(identity);
-
-        System.out.println(identityString);
 
         outToServer.writeBytes(identityString +"\n");
 
