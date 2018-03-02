@@ -1,4 +1,6 @@
-package com.company;
+package com.company.main;
+
+import com.company.User;
 
 import java.io.IOException;
 import java.security.InvalidAlgorithmParameterException;

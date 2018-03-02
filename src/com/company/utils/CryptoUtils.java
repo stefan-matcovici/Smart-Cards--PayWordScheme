@@ -1,4 +1,4 @@
-package com.company;
+package com.company.utils;
 
 import com.company.models.DiffieHellmanKeyExchangeMessage;
 import com.fasterxml.jackson.databind.ObjectMapper;

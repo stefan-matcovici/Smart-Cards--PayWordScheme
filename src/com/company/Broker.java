@@ -1,10 +1,8 @@
 package com.company;
 
-import com.company.models.DiffieHellmanKeyExchangeMessage;
 import com.company.models.Identity;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import javax.crypto.KeyAgreement;
 import java.io.BufferedReader;
 import java.io.DataOutputStream;
 import java.io.IOException;
@@ -13,13 +11,11 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
-import java.security.KeyPair;
-import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.PublicKey;
 import java.security.spec.InvalidKeySpecException;
 
-import static com.company.CryptoUtils.getDiffieHellmanComputedSecret;
+import static com.company.utils.CryptoUtils.getDiffieHellmanComputedSecret;
 
 public class Broker {
     private static final int BROKER_SERVER_PORT = 6789;
