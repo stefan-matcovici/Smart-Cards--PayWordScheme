@@ -5,20 +5,17 @@ import java.security.NoSuchAlgorithmException;
 import java.security.PublicKey;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.X509EncodedKeySpec;
-import java.util.Arrays;
 
-public class Identity {
-
-    private String identity;
+public class DiffieHellmanKeyExchangeMessage {
     private byte[] publicKeyByteArray;
     private String algorithm;
 
-    public String getIdentity() {
-        return identity;
+    public byte[] getPublicKeyByteArray() {
+        return publicKeyByteArray;
     }
 
-    public void setIdentity(String identity) {
-        this.identity = identity;
+    public void setPublicKeyByteArray(byte[] publicKeyByteArray) {
+        this.publicKeyByteArray = publicKeyByteArray;
     }
 
     public String getAlgorithm() {
@@ -27,14 +24,6 @@ public class Identity {
 
     public void setAlgorithm(String algorithm) {
         this.algorithm = algorithm;
-    }
-
-    public void setPublicKeyByteArray(byte[] publicKeyByteArray) {
-        this.publicKeyByteArray = Arrays.copyOf(publicKeyByteArray, publicKeyByteArray.length);
-    }
-
-    public byte[] getPublicKeyByteArray() {
-        return publicKeyByteArray;
     }
 
     public PublicKey computePublicKey() throws NoSuchAlgorithmException, InvalidKeySpecException {
