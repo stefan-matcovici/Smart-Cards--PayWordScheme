@@ -14,6 +14,8 @@ import java.security.spec.InvalidKeySpecException;
 public class MainBroker {
     public static void main(String[] args) throws Exception {
         Broker broker = new Broker();
-        broker.registerUser();
+        while (true) {
+            broker.registerUser();
+        }
     }
 }

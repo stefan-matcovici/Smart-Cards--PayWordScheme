@@ -6,6 +6,7 @@ import javax.crypto.BadPaddingException;
 import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.NoSuchPaddingException;
 import java.io.IOException;
+import java.net.Socket;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
@@ -17,8 +18,15 @@ public class MainUser {
     private static final int SELLER_PORT = 6790;
 
     public static void main(String[] args) throws Exception {
-        User user = new User();
-        user.registerToBroker(BROKER_SERVER_PORT);
-        user.commitToSeller(SELLER_PORT);
+        User user1 = new User();
+        user1.registerToBroker(BROKER_SERVER_PORT);
+        Socket sellerSocket1 = user1.commitToSeller(SELLER_PORT);
+        user1.payToSeller(sellerSocket1, 10);
+        user1.payToSeller(sellerSocket1, 20);
+//
+//        User user2 = new User();
+//        user2.registerToBroker(BROKER_SERVER_PORT);
+//        Socket sellerSocket2 = user2.commitToSeller(SELLER_PORT);
+//        user2.payToSeller(sellerSocket2, 20);
     }
 }

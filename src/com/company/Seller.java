@@ -1,7 +1,10 @@
 package com.company;
 
+import com.company.models.Payment;
 import com.company.models.SignedCommit;
 import com.company.models.UserPaymentDetails;
+import com.fasterxml.jackson.core.JsonParseException;
+import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.io.BufferedReader;
@@ -9,7 +12,6 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.security.NoSuchAlgorithmException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -18,14 +20,14 @@ public class Seller {
     private static final int SELLER_PORT = 6790;
     private final ObjectMapper objectMapper;
     private ServerSocket sellerServerSocket;
-    private Map<Integer, UserPaymentDetails> lastUserPaymentDetails = new HashMap<>();
+    private Map<Socket, UserPaymentDetails> lastUserPaymentDetails = new HashMap<Socket, UserPaymentDetails>();
 
     public Seller() throws IOException {
         sellerServerSocket = new ServerSocket(SELLER_PORT);
         objectMapper = new ObjectMapper();
     }
 
-    public void receiveCommitFromUser() throws Exception {
+    public Socket receiveCommitFromUser() throws Exception {
         Socket userConnectionSocket = sellerServerSocket.accept();
 
         BufferedReader inFromUser =
@@ -39,7 +41,30 @@ public class Seller {
         UserPaymentDetails userPaymentDetails = new UserPaymentDetails();
         userPaymentDetails.setPaymentIndex(0);
         userPaymentDetails.setLastDigest(signedCommit.getPlainCommit().getHashChainRoot());
+        userPaymentDetails.setCommit(signedCommit.getPlainCommit());
 
-        lastUserPaymentDetails.put(userConnectionSocket.getPort(), userPaymentDetails);
+        lastUserPaymentDetails.put(userConnectionSocket, userPaymentDetails);
+        return userConnectionSocket;
+    }
+
+    public void receivePaymentsFromUser(Socket userSocket) throws Exception {
+        BufferedReader inFromUser =
+                new BufferedReader(new InputStreamReader(userSocket.getInputStream()));
+
+        new Thread(() -> {
+            try {
+                while (true) {
+                    Payment payment = objectMapper.readValue(inFromUser.readLine(), Payment.class);
+                    UserPaymentDetails userPaymentDetails = lastUserPaymentDetails.get(userSocket);
+                    userPaymentDetails.processPayment(payment);
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        });
+    }
+
+    public Map<Socket, UserPaymentDetails> getLastUserPaymentDetails() {
+        return lastUserPaymentDetails;
     }
 }

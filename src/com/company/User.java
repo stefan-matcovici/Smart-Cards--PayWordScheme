@@ -1,9 +1,7 @@
 package com.company;
 
-import com.company.models.Commit;
-import com.company.models.SignedCertificate;
+import com.company.models.*;
 import com.company.models.Identity;
-import com.company.models.SignedCommit;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -18,10 +16,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.Socket;
 import java.security.*;
-import java.util.ArrayList;
-import java.util.Base64;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 
 import static com.company.utils.CryptoUtils.buildKeyPair;
 import static com.company.utils.CryptoUtils.getDiffieHellmanComputedSecret;
@@ -33,8 +28,7 @@ public class User {
     private PrivateKey privateKey;
     private SignedCertificate signedCertificateFromBroker;
     private ObjectMapper objectMapper;
-    private List<byte[]> hashChain = new ArrayList<>();
-
+    private Map<Socket, HashChain> sellerToHashChain = new HashMap<>();
 
     public User() {
         objectMapper = new ObjectMapper();
@@ -60,19 +54,12 @@ public class User {
 
         DataOutputStream outToSeller = new DataOutputStream(userSocketToSeller.getOutputStream());
 
-        final byte[] hashChainRoot = UUID.randomUUID().toString().getBytes();
-        hashChain.add(hashChainRoot);
+        HashChain hashChain = new HashChain(HASH_CHAIN_MAX_SIZE);
 
-        MessageDigest messageDigest = MessageDigest.getInstance("SHA-256");
-
-        for (int i = 1; i < HASH_CHAIN_MAX_SIZE; i++) {
-            final byte[] digest = messageDigest.digest(hashChain.get(i - 1));
-
-            hashChain.add(digest);
-        }
+        sellerToHashChain.put(userSocketToSeller, hashChain);
 
         Commit commit = new Commit();
-        commit.setHashChainRoot(hashChain.get(0));
+        commit.setHashChainRoot(hashChain.getHashChainRoot());
         commit.setNumberHashChainElements(HASH_CHAIN_MAX_SIZE);
         commit.setSellerIdentityName(SELLER_IDENTITY);
         commit.setSignedCertificateFromBrokerToUser(signedCertificateFromBroker);
@@ -84,6 +71,18 @@ public class User {
         outToSeller.writeBytes(objectMapper.writeValueAsString(signedCommit) + "\n");
 
         return userSocketToSeller;
+    }
+
+    public void payToSeller(Socket sellerSocket, int amount) throws Exception {
+        HashChain hashChain = sellerToHashChain.get(sellerSocket);
+
+        Payment payment = new Payment();
+        payment.setCurrentDigest(hashChain.computeNextHash(amount));
+        payment.setCurrentPaymentIndex(hashChain.getCurrentHashIndex());
+
+        DataOutputStream outToSeller = new DataOutputStream(sellerSocket.getOutputStream());
+
+        outToSeller.writeBytes(objectMapper.writeValueAsString(payment) + "\n");
     }
 
     private void sendEncryptedIdentityToBroker(DataOutputStream outToBroker, byte[] commonKey) throws NoSuchAlgorithmException, NoSuchPaddingException, InvalidKeyException, IllegalBlockSizeException, BadPaddingException, IOException {
