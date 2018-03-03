@@ -1,7 +1,7 @@
 package com.company;
 
-import com.company.main.Certificate;
-import com.company.main.SignedCertificate;
+import com.company.models.Certificate;
+import com.company.models.SignedCertificate;
 import com.company.models.Identity;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -17,7 +17,6 @@ import java.io.InputStreamReader;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.security.*;
-import java.security.spec.InvalidKeySpecException;
 import java.util.Base64;
 
 import static com.company.utils.CryptoUtils.*;
@@ -32,6 +31,7 @@ public class Broker {
     public Broker() throws IOException, NoSuchAlgorithmException {
         brokerServerSocket = new ServerSocket(BROKER_SERVER_PORT);
         objectMapper = new ObjectMapper();
+
         buildOwnIdentity();
     }
 
