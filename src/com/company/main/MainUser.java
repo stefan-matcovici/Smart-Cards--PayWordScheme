@@ -22,8 +22,9 @@ public class MainUser {
         user1.registerToBroker(BROKER_SERVER_PORT);
         Socket sellerSocket1 = user1.commitToSeller(SELLER_PORT);
         user1.payToSeller(sellerSocket1, 10);
+        Thread.sleep(1000);
         user1.payToSeller(sellerSocket1, 20);
-//
+
 //        User user2 = new User();
 //        user2.registerToBroker(BROKER_SERVER_PORT);
 //        Socket sellerSocket2 = user2.commitToSeller(SELLER_PORT);

@@ -14,13 +14,15 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class Seller {
 
     private static final int SELLER_PORT = 6790;
     private final ObjectMapper objectMapper;
     private ServerSocket sellerServerSocket;
-    private Map<Socket, UserPaymentDetails> lastUserPaymentDetails = new HashMap<Socket, UserPaymentDetails>();
+    private Map<Socket, UserPaymentDetails> lastUserPaymentDetails = new ConcurrentHashMap<>();
+    private BufferedReader inFromUser;
 
     public Seller() throws IOException {
         sellerServerSocket = new ServerSocket(SELLER_PORT);
@@ -51,17 +53,10 @@ public class Seller {
         BufferedReader inFromUser =
                 new BufferedReader(new InputStreamReader(userSocket.getInputStream()));
 
-        new Thread(() -> {
-            try {
-                while (true) {
-                    Payment payment = objectMapper.readValue(inFromUser.readLine(), Payment.class);
-                    UserPaymentDetails userPaymentDetails = lastUserPaymentDetails.get(userSocket);
-                    userPaymentDetails.processPayment(payment);
-                }
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        });
+        System.out.println(inFromUser.readLine());
+//        Payment payment = objectMapper.readValue(inFromUser.readLine(), Payment.class);
+//        UserPaymentDetails userPaymentDetails = lastUserPaymentDetails.get(userSocket);
+//        userPaymentDetails.processPayment(payment);
     }
 
     public Map<Socket, UserPaymentDetails> getLastUserPaymentDetails() {

@@ -9,12 +9,9 @@ import static java.lang.Thread.sleep;
 public class MainSeller {
     public static void main(String[] args) throws Exception {
         Seller seller = new Seller();
-        while(true) {
-            Socket userSocket = seller.receiveCommitFromUser();
-            seller.receivePaymentsFromUser(userSocket);
-            sleep(1000);
-            System.out.println(seller.getLastUserPaymentDetails());
-        }
-
+        Socket userSocket = seller.receiveCommitFromUser();
+        seller.receivePaymentsFromUser(userSocket);
+//        System.out.println(seller.getLastUserPaymentDetails());
+        seller.receivePaymentsFromUser(userSocket);
     }
 }
