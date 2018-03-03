@@ -97,11 +97,8 @@ public class User {
 
     private void receiveSignedCertificateFromBroker(BufferedReader inFromBroker) throws Exception {
         SignedCertificate signedCertificate = objectMapper.readValue(inFromBroker.readLine(), SignedCertificate.class);
-        if (signedCertificate.verifySignature()) {
-            this.signedCertificateFromBroker = signedCertificate;
-        } else {
-            throw new Exception("Invalid certificate received from broker");
-        }
+        signedCertificate.verifySignature();
+        this.signedCertificateFromBroker = signedCertificate;
     }
 
     private byte[] getEncryptedIdentity(byte[] commonKey, byte[] pubKey) throws JsonProcessingException, NoSuchAlgorithmException, NoSuchPaddingException, InvalidKeyException, IllegalBlockSizeException, BadPaddingException {

@@ -24,7 +24,7 @@ public class CryptoUtils {
         return dh;
     }
 
-    public static byte[] getDiffieHellmanComputedSecret(DataOutputStream outToBroker, BufferedReader inFromBroker) throws NoSuchAlgorithmException, InvalidAlgorithmParameterException, InvalidKeyException, IOException, InvalidKeySpecException {
+    public static byte[] getDiffieHellmanComputedSecret(DataOutputStream outToBroker, BufferedReader inFromBroker) throws NoSuchAlgorithmException, InvalidKeyException, IOException, InvalidKeySpecException {
         KeyAgreement userKeyAgree = KeyAgreement.getInstance("DH");
         KeyPair userKeyPair = getKeyGen().generateKeyPair();
 
@@ -59,12 +59,14 @@ public class CryptoUtils {
         return rsa.sign();
     }
 
-    public static boolean verifySignature(byte[] data, byte[] signature, PublicKey key) throws Exception {
+    public static void verifySignature(byte[] data, byte[] signature, PublicKey key) throws Exception {
         Signature sig = Signature.getInstance("SHA1withRSA");
         sig.initVerify(key);
         sig.update(data);
 
-        return sig.verify(signature);
+        if (!sig.verify(signature)) {
+            throw new Exception("Invalid signature");
+        }
     }
 
 }

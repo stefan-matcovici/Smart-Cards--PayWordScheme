@@ -24,7 +24,7 @@ public class SignedCertificate {
         this.signature = signature;
     }
 
-    public boolean verifySignature() throws Exception {
-        return CryptoUtils.verifySignature(new ObjectMapper().writeValueAsBytes(plainCertificate), signature, plainCertificate.getCertifierIdentity().computePublicKey());
+    public void verifySignature() throws Exception {
+        CryptoUtils.verifySignature(new ObjectMapper().writeValueAsBytes(plainCertificate), signature, plainCertificate.getCertifierIdentity().computePublicKey());
     }
 }

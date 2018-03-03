@@ -25,12 +25,12 @@ public class SignedCommit {
         this.signature = signature;
     }
 
-    public boolean verifySignature() throws Exception {
+    public void verifySignature() throws Exception {
         final PublicKey userPublicKey = plainCommit.getSignedCertificateFromBrokerToUser()
                 .getPlainCertificate()
                 .getCertifiedIdentity()
                 .computePublicKey();
 
-        return CryptoUtils.verifySignature(new ObjectMapper().writeValueAsBytes(plainCommit), signature, userPublicKey);
+        CryptoUtils.verifySignature(new ObjectMapper().writeValueAsBytes(plainCommit), signature, userPublicKey);
     }
 }
