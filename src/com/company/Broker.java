@@ -35,6 +35,23 @@ public class Broker {
         buildOwnIdentity();
     }
 
+    public void registerUser() throws Exception {
+        Socket userConnectionSocket = brokerServerSocket.accept();
+
+        BufferedReader inFromUser =
+                new BufferedReader(new InputStreamReader(userConnectionSocket.getInputStream()));
+        DataOutputStream outToUser = new DataOutputStream(userConnectionSocket.getOutputStream());
+
+        byte[] secret = getDiffieHellmanComputedSecret(outToUser, inFromUser);
+
+        Identity identity = receiveUserIdentity(inFromUser, secret);
+
+        SignedCertificate signedCertificate = createSignedCertificate(identity);
+        outToUser.writeBytes(objectMapper.writeValueAsString(signedCertificate) + "\n");
+
+        userConnectionSocket.close();
+    }
+
     private void buildOwnIdentity() throws NoSuchAlgorithmException {
         ownIdentity = new Identity();
         ownIdentity.setIdentity("Broker");
@@ -43,32 +60,6 @@ public class Broker {
         privateKey = keyPair.getPrivate();
         ownIdentity.setAlgorithm(publicKey.getAlgorithm());
         ownIdentity.setPublicKeyByteArray(publicKey.getEncoded());
-    }
-
-    public void registerUser() throws Exception {
-        Socket userConnectionSocket = brokerServerSocket.accept();
-
-        BufferedReader inFromUser =
-                new BufferedReader(new InputStreamReader(userConnectionSocket.getInputStream()));
-        DataOutputStream outToUser = new DataOutputStream(userConnectionSocket.getOutputStream());
-
-        final byte[] secret = getDiffieHellmanComputedSecret(outToUser, inFromUser);
-
-        final Identity identity = receiveUserIdentity(inFromUser, secret);
-
-        Certificate certificate = new Certificate();
-        certificate.setCertifiedIdentity(identity);
-        certificate.setCertifierIdentity(ownIdentity);
-
-        final byte[] signature = sign(objectMapper.writeValueAsBytes(certificate), privateKey);
-
-        SignedCertificate signedCertificate = new SignedCertificate();
-        signedCertificate.setPlainCertificate(certificate);
-        signedCertificate.setSignature(signature);
-
-        outToUser.writeBytes(objectMapper.writeValueAsString(signedCertificate) + "\n");
-
-        userConnectionSocket.close();
     }
 
     private Identity receiveUserIdentity(BufferedReader inFromUser, byte[] secret) throws IOException, NoSuchAlgorithmException, NoSuchPaddingException, InvalidKeyException, IllegalBlockSizeException, BadPaddingException {
@@ -80,5 +71,18 @@ public class Broker {
         byte[] decryptedIdentity = cipher.doFinal(encryptedIdentity);
 
         return new ObjectMapper().readValue(decryptedIdentity, Identity.class);
+    }
+
+    private SignedCertificate createSignedCertificate(Identity identity) throws Exception {
+        Certificate certificate = new Certificate();
+        certificate.setCertifiedIdentity(identity);
+        certificate.setCertifierIdentity(ownIdentity);
+
+        final byte[] signature = sign(objectMapper.writeValueAsBytes(certificate), privateKey);
+
+        SignedCertificate signedCertificate = new SignedCertificate();
+        signedCertificate.setPlainCertificate(certificate);
+        signedCertificate.setSignature(signature);
+        return signedCertificate;
     }
 }
