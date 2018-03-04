@@ -50,9 +50,27 @@ public class Seller {
 
     public void receivePaymentsFromUser(Socket userSocket) throws Exception {
         BufferedReader reader = userReaders.get(userSocket);
-        Payment payment = objectMapper.readValue(reader.readLine(), Payment.class);
-        UserPaymentDetails userPaymentDetails = lastUserPaymentDetails.get(userSocket);
-        userPaymentDetails.processPayment(payment);
+        Thread thread = new Thread(() -> {
+            Payment payment = null;
+            try {
+
+                String content = reader.readLine();
+                while (content != null) {
+                    payment = objectMapper.readValue(content, Payment.class);
+                    UserPaymentDetails userPaymentDetails = lastUserPaymentDetails.get(userSocket);
+                    userPaymentDetails.processPayment(payment);
+                    content = reader.readLine();
+                }
+
+                userSocket.close();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        });
+
+        thread.start();
+
+
     }
 
     public Map<Socket, UserPaymentDetails> getLastUserPaymentDetails() {

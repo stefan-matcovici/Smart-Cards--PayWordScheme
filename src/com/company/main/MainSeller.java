@@ -11,20 +11,23 @@ import static java.lang.Thread.sleep;
 public class MainSeller {
     public static void main(String[] args) throws Exception {
         Seller seller = new Seller();
-        Socket userSocket1 = seller.receiveCommitFromUser();
 
-        seller.receivePaymentsFromUser(userSocket1);
-        seller.receivePaymentsFromUser(userSocket1);
-        seller.receivePaymentsFromUser(userSocket1);
+        Thread watcher = new Thread(() -> {
+            while(true) {
+                try {
+                    Thread.sleep(10000);
+                    System.out.println(seller.getLastUserPaymentDetails());
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+        });
 
-        Socket userSocket2 = seller.receiveCommitFromUser();
+        watcher.start();
 
-        seller.receivePaymentsFromUser(userSocket2);
-        seller.receivePaymentsFromUser(userSocket2);
-
-        System.out.println(seller.getLastUserPaymentDetails());
-
-        userSocket1.close();
-        userSocket2.close();
+        while (true) {
+            Socket userSocket1 = seller.receiveCommitFromUser();
+            seller.receivePaymentsFromUser(userSocket1);
+        }
     }
 }
