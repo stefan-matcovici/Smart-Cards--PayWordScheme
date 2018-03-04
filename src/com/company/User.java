@@ -10,10 +10,7 @@ import javax.crypto.Cipher;
 import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.NoSuchPaddingException;
 import javax.crypto.spec.SecretKeySpec;
-import java.io.BufferedReader;
-import java.io.DataOutputStream;
-import java.io.IOException;
-import java.io.InputStreamReader;
+import java.io.*;
 import java.net.Socket;
 import java.security.*;
 import java.util.*;
@@ -69,6 +66,7 @@ public class User {
         signedCommit.setSignature(sign(objectMapper.writeValueAsBytes(commit), privateKey));
 
         outToSeller.writeBytes(objectMapper.writeValueAsString(signedCommit) + "\n");
+        outToSeller.flush();
 
         return userSocketToSeller;
     }
@@ -83,6 +81,7 @@ public class User {
         DataOutputStream outToSeller = new DataOutputStream(sellerSocket.getOutputStream());
 
         outToSeller.writeBytes(objectMapper.writeValueAsString(payment) + "\n");
+        outToSeller.flush();
     }
 
     private void sendEncryptedIdentityToBroker(DataOutputStream outToBroker, byte[] commonKey) throws NoSuchAlgorithmException, NoSuchPaddingException, InvalidKeyException, IllegalBlockSizeException, BadPaddingException, IOException {
