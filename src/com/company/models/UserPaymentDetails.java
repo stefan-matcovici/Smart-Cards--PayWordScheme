@@ -1,19 +1,13 @@
 package com.company.models;
 
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
+
+import static com.company.utils.CryptoUtils.getMessageDigest;
 
 public class UserPaymentDetails {
     private byte[] lastDigest;
     private int paymentIndex;
     private Commit commit;
-
-    private MessageDigest messageDigest;
-
-    public UserPaymentDetails() throws NoSuchAlgorithmException {
-        messageDigest = MessageDigest.getInstance("SHA-256");
-    }
 
     public void processPayment(Payment payment) throws Exception {
         int amount = payment.getCurrentPaymentIndex() - paymentIndex;
@@ -21,8 +15,8 @@ public class UserPaymentDetails {
         System.out.println(amount);
 
         byte[] currentHash = lastDigest;
-        for (int i=0; i<amount; i++) {
-            currentHash = messageDigest.digest(currentHash);
+        for (int i = 0; i < amount; i++) {
+            currentHash = getMessageDigest().digest(currentHash);
         }
 
         if (Arrays.equals(currentHash, payment.getCurrentDigest())) {
@@ -58,13 +52,15 @@ public class UserPaymentDetails {
         this.paymentIndex = paymentIndex;
     }
 
+    public String computeUserIdentity() {
+        return getCommit().getSignedCertificateFromBrokerToUser().getPlainCertificate().getCertifiedIdentity().getIdentity();
+    }
     @Override
     public String toString() {
         return "UserPaymentDetails{" +
                 "lastDigest=" + Arrays.toString(lastDigest) +
                 ", paymentIndex=" + paymentIndex +
                 ", commit=" + commit +
-                ", messageDigest=" + messageDigest +
                 '}';
     }
 }

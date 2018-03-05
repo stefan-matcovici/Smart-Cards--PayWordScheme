@@ -1,7 +1,5 @@
 package com.company.models;
 
-import com.company.models.Identity;
-
 public class Certificate {
     private Identity certifiedIdentity;
     private Identity certifierIdentity;

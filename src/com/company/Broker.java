@@ -3,6 +3,7 @@ package com.company;
 import com.company.models.Certificate;
 import com.company.models.SignedCertificate;
 import com.company.models.Identity;
+import com.company.models.UserPaymentDetails;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import javax.crypto.BadPaddingException;
@@ -17,19 +18,29 @@ import java.io.InputStreamReader;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.security.*;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Base64;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 
 import static com.company.utils.CryptoUtils.*;
 
 public class Broker {
     private static final int BROKER_SERVER_PORT = 6789;
+    private static final int SELLER_BROKER_SERVER_PORT = 6790;
     private ServerSocket brokerServerSocket;
+    private ServerSocket sellerBrokerServerSocket;
     private Identity ownIdentity;
     private PrivateKey privateKey;
     private ObjectMapper objectMapper;
+    private Map<String, List<UserPaymentDetails>> sellersPayments;
 
     public Broker() throws IOException, NoSuchAlgorithmException {
         brokerServerSocket = new ServerSocket(BROKER_SERVER_PORT);
+        sellerBrokerServerSocket = new ServerSocket(SELLER_BROKER_SERVER_PORT);
+
         objectMapper = new ObjectMapper();
 
         buildOwnIdentity();
@@ -50,6 +61,54 @@ public class Broker {
         outToUser.writeBytes(objectMapper.writeValueAsString(signedCertificate) + "\n");
 
         userConnectionSocket.close();
+    }
+
+    public void processCommitsFromSellers() throws IOException, NoSuchAlgorithmException {
+        Socket sellerConnectionSocket = sellerBrokerServerSocket.accept();
+
+        BufferedReader inFromSeller =
+                new BufferedReader(new InputStreamReader(sellerConnectionSocket.getInputStream()));
+
+        List<UserPaymentDetails> userPaymentDetailsList = new ArrayList<>();
+        String content = inFromSeller.readLine();
+        while (content != null) {
+            UserPaymentDetails readUserPaymentDetails = objectMapper.readValue(content, UserPaymentDetails.class);
+            if (isValidPayment(readUserPaymentDetails)) {
+                userPaymentDetailsList.add(readUserPaymentDetails);
+            }
+
+            content = inFromSeller.readLine();
+        }
+
+        sellersPayments.put(userPaymentDetailsList.get(0).getCommit().getSellerIdentityName(), userPaymentDetailsList);
+
+        System.out.println(sellersPayments);
+    }
+
+    private boolean isValidPayment(UserPaymentDetails userPaymentDetails) throws NoSuchAlgorithmException {
+        final int[] lastIndex = {0};
+        final byte[][] lastDigest = {null};
+        if (sellersPayments.containsKey(userPaymentDetails.getCommit().getSellerIdentityName())) {
+            sellersPayments.get(userPaymentDetails.getCommit().getSellerIdentityName())
+                    .stream()
+                    .filter(userPaymentDetails1 ->
+                            Objects.equals(userPaymentDetails1.computeUserIdentity(), userPaymentDetails.computeUserIdentity()))
+                    .findAny()
+                    .ifPresent(userPaymentDetails1 -> {
+                        lastIndex[0] = userPaymentDetails1.getPaymentIndex();
+                        lastDigest[0] = userPaymentDetails1.getLastDigest();
+                    });
+        } else {
+            lastIndex[0] = 0;
+            lastDigest[0] = userPaymentDetails.getCommit().getHashChainRoot();
+        }
+
+        byte[] currentHash = lastDigest[0];
+        for (int i = 0; i < userPaymentDetails.getPaymentIndex() - lastIndex[0] + 1; i++) {
+            currentHash = getMessageDigest().digest(currentHash);
+        }
+
+        return Arrays.equals(currentHash, lastDigest[0]);
     }
 
     private void buildOwnIdentity() throws NoSuchAlgorithmException {

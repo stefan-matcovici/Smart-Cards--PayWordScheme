@@ -4,7 +4,6 @@ import com.company.models.DiffieHellmanKeyExchangeMessage;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import javax.crypto.KeyAgreement;
-import javax.crypto.spec.DHParameterSpec;
 import java.io.BufferedReader;
 import java.io.DataOutputStream;
 import java.io.IOException;
@@ -15,7 +14,15 @@ import java.security.spec.InvalidKeySpecException;
 public class CryptoUtils {
     private static BigInteger g512 = new BigInteger("1234567890", 16);
     private static BigInteger p512 = new BigInteger("1234567890", 16);
-    public static DHParameterSpec dhParams = new DHParameterSpec(p512, g512);
+    private static MessageDigest messageDigest;
+
+    static {
+        try {
+            messageDigest = MessageDigest.getInstance("SHA-256");
+        } catch (NoSuchAlgorithmException e) {
+            e.printStackTrace();
+        }
+    }
 
     public static KeyPairGenerator getKeyGen() throws NoSuchAlgorithmException {
         final KeyPairGenerator dh = KeyPairGenerator.getInstance("DH");
@@ -69,4 +76,7 @@ public class CryptoUtils {
         }
     }
 
+    public static MessageDigest getMessageDigest() throws NoSuchAlgorithmException {
+        return messageDigest;
+    }
 }
