@@ -21,6 +21,7 @@ import java.security.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Base64;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -35,7 +36,7 @@ public class Broker {
     private Identity ownIdentity;
     private PrivateKey privateKey;
     private ObjectMapper objectMapper;
-    private Map<String, List<UserPaymentDetails>> sellersPayments;
+    private Map<String, List<UserPaymentDetails>> sellersPayments = new HashMap<>();
 
     public Broker() throws IOException, NoSuchAlgorithmException {
         brokerServerSocket = new ServerSocket(BROKER_SERVER_PORT);
@@ -104,11 +105,11 @@ public class Broker {
         }
 
         byte[] currentHash = lastDigest[0];
-        for (int i = 0; i < userPaymentDetails.getPaymentIndex() - lastIndex[0] + 1; i++) {
+        for (int i = 0; i < userPaymentDetails.getPaymentIndex() - lastIndex[0]; i++) {
             currentHash = getMessageDigest().digest(currentHash);
         }
 
-        return Arrays.equals(currentHash, lastDigest[0]);
+        return Arrays.equals(currentHash, userPaymentDetails.getLastDigest());
     }
 
     private void buildOwnIdentity() throws NoSuchAlgorithmException {
