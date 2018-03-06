@@ -1,6 +1,7 @@
 package com.company.models;
 
 import java.util.Arrays;
+import java.util.Base64;
 
 public class Payment {
     private byte[] currentDigest;
@@ -25,7 +26,7 @@ public class Payment {
     @Override
     public String toString() {
         return "Payment{" +
-                "currentDigest=" + Arrays.toString(currentDigest) +
+                "currentDigest=" + Base64.getEncoder().encodeToString(currentDigest) +
                 ", currentPaymentIndex=" + currentPaymentIndex +
                 '}';
     }

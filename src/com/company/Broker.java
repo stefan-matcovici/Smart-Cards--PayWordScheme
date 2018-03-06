@@ -6,10 +6,7 @@ import com.company.models.Identity;
 import com.company.models.UserPaymentDetails;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
-import javax.crypto.IllegalBlockSizeException;
-import javax.crypto.NoSuchPaddingException;
 import javax.crypto.spec.SecretKeySpec;
 import java.io.BufferedReader;
 import java.io.DataOutputStream;
@@ -70,10 +67,15 @@ public class Broker {
         BufferedReader inFromSeller =
                 new BufferedReader(new InputStreamReader(sellerConnectionSocket.getInputStream()));
 
+        System.out.println("Processing commit from a seller...");
+
         List<UserPaymentDetails> userPaymentDetailsList = new ArrayList<>();
         String content = inFromSeller.readLine();
         while (content != null) {
             UserPaymentDetails readUserPaymentDetails = objectMapper.readValue(content, UserPaymentDetails.class);
+
+            System.out.printf("Got the following user payment: %s\n\n", readUserPaymentDetails.toString());
+
             if (isValidPayment(readUserPaymentDetails)) {
                 userPaymentDetailsList.add(readUserPaymentDetails);
             }
@@ -122,7 +124,7 @@ public class Broker {
         ownIdentity.setPublicKeyByteArray(publicKey.getEncoded());
     }
 
-    private Identity receiveUserIdentity(BufferedReader inFromUser, byte[] secret) throws IOException, NoSuchAlgorithmException, NoSuchPaddingException, InvalidKeyException, IllegalBlockSizeException, BadPaddingException {
+    private Identity receiveUserIdentity(BufferedReader inFromUser, byte[] secret) throws Exception {
         byte[] encryptedIdentity = Base64.getDecoder().decode(inFromUser.readLine());
         SecretKeySpec keySpec = new SecretKeySpec(secret, "AES");
         Cipher cipher = Cipher.getInstance("AES");

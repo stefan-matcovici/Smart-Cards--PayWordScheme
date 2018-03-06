@@ -1,6 +1,7 @@
 package com.company.models;
 
 import java.util.Arrays;
+import java.util.Base64;
 
 import static com.company.utils.CryptoUtils.getMessageDigest;
 
@@ -58,7 +59,7 @@ public class UserPaymentDetails {
     @Override
     public String toString() {
         return "UserPaymentDetails{" +
-                "lastDigest=" + Arrays.toString(lastDigest) +
+                "lastDigest=" + Base64.getEncoder().encodeToString(lastDigest) +
                 ", paymentIndex=" + paymentIndex +
                 ", commit=" + commit +
                 '}';

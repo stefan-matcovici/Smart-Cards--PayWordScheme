@@ -1,5 +1,7 @@
 package com.company.models;
 
+import java.util.Base64;
+
 public class Commit {
     private String sellerIdentityName;
     private SignedCertificate signedCertificateFromBrokerToUser;
@@ -36,5 +38,15 @@ public class Commit {
 
     public void setNumberHashChainElements(int numberHashChainElements) {
         this.numberHashChainElements = numberHashChainElements;
+    }
+
+    @Override
+    public String toString() {
+        return "Commit{" +
+                "sellerIdentityName='" + sellerIdentityName + '\'' +
+                ", signedCertificateFromBrokerToUser=" + signedCertificateFromBrokerToUser +
+                ", hashChainRoot=" + Base64.getEncoder().encodeToString(hashChainRoot) +
+                ", numberHashChainElements=" + numberHashChainElements +
+                '}';
     }
 }

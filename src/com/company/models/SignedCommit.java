@@ -4,6 +4,8 @@ import com.company.utils.CryptoUtils;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.security.PublicKey;
+import java.util.Arrays;
+import java.util.Base64;
 
 public class SignedCommit {
     private Commit plainCommit;
@@ -32,5 +34,13 @@ public class SignedCommit {
                 .computePublicKey();
 
         CryptoUtils.verifySignature(new ObjectMapper().writeValueAsBytes(plainCommit), signature, userPublicKey);
+    }
+
+    @Override
+    public String toString() {
+        return "SignedCommit{" +
+                "plainCommit=" + Base64.getEncoder().encodeToString(signature) +
+                ", signature=" + Arrays.toString(signature) +
+                '}';
     }
 }
