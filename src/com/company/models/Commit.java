@@ -56,8 +56,8 @@ public class Commit {
         return "Commit{" +
                 "sellerIdentityName='" + sellerIdentityName + '\'' +
                 ", signedCertificateFromBrokerToUser=" + signedCertificateFromBrokerToUser +
-                ", hashChainRoot=" + hashChainsRoots.stream().map(Base64.getEncoder()::encodeToString).collect(Collectors.joining(", ")) +
-                ", numberHashChainElements=" + numberHashChainElements +
+                ", hashChainRoot=[" + hashChainsRoots.stream().map(Base64.getEncoder()::encodeToString).collect(Collectors.joining(", ")) +
+                "], numberHashChainElements=" + numberHashChainElements +
                 '}';
     }
 }

@@ -28,10 +28,8 @@ public class Payment {
     @Override
     public String toString() {
         return "Payment{" +
-                "currentDigest=" + currentDigests +
-                ", currentPaymentIndex=" + currentPaymentIndexes +
-                "currentDigest=" + currentDigests.stream().map(Base64.getEncoder()::encodeToString).collect(Collectors.joining(", ")) +
-                ", currentPaymentIndex=" + currentPaymentIndexes.stream().map(String::valueOf).collect(Collectors.joining(", ")) +
-                '}';
+                "currentDigests=[" + currentDigests.stream().map(Base64.getEncoder()::encodeToString).collect(Collectors.joining(", ")) +
+                "], currentPaymentIndexes=[" + currentPaymentIndexes.stream().map(String::valueOf).collect(Collectors.joining(", ")) +
+                "]}";
     }
 }

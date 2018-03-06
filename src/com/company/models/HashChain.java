@@ -49,10 +49,8 @@ public class HashChain {
     @Override
     public String toString() {
         return "HashChain{" +
-                "hashChainList=" + hashChainList.stream()
-                .map(bytes -> Base64.getEncoder().encodeToString(bytes))
-                .collect(Collectors.toList())+
-                ", currentHashIndex=" + currentHashIndex +
+                "hashChainList=[" + hashChainList.stream().map(bytes -> Base64.getEncoder().encodeToString(bytes)).collect(Collectors.toList()) +
+                "], currentHashIndex=" + currentHashIndex +
                 '}';
     }
 }

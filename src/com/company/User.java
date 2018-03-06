@@ -114,7 +114,7 @@ public class User {
             currentDigests.add(hashChainList.get(i).computeNextHash(values[i]));
         }
 
-//        System.out.printf("Computed the hash that needs to be sent to the seller: <%s> and update the hash chain <%s> \n\n", Base64.getEncoder().encodeToString(currentDigest), hashChain);
+        System.out.printf("Computed the hash that needs to be sent to the seller: [<%s>] and update the hash chain [<%s>] \n\n", currentDigests.stream().map(Base64.getEncoder()::encodeToString).collect(Collectors.joining(", ")), hashChainList.stream().map(String::valueOf).collect(Collectors.joining(", ")));
 
         Payment payment = new Payment();
         payment.setCurrentDigests(currentDigests);

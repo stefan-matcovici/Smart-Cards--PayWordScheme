@@ -71,11 +71,9 @@ public class UserPaymentDetails {
     @Override
     public String toString() {
         return "UserPaymentDetails{" +
-                "lastDigest=" + lastDigests +
-                ", paymentIndex=" + paymentIndexes +
-                "lastDigest=" + lastDigests.stream().map(Base64.getEncoder()::encodeToString).collect(Collectors.joining(", ")) +
-                ", paymentIndex=" + paymentIndexes.stream().map(String::valueOf).collect(Collectors.joining(", ")) +
-                ", commit=" + commit +
+                ", lastDigests=[" + lastDigests.stream().map(Base64.getEncoder()::encodeToString).collect(Collectors.joining(", ")) +
+                "], paymentIndex=[" + paymentIndexes.stream().map(String::valueOf).collect(Collectors.joining(", ")) +
+                "], commit=" + commit +
                 '}';
     }
 }
