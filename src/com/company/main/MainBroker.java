@@ -11,11 +11,12 @@ public class MainBroker {
 
         new Thread(() -> {
             try {
+                Thread.sleep(10000);
                 System.out.println("Started to process commits from users...");
                 while (true) {
                     broker.processCommitsFromSellers();
                 }
-            } catch (IOException | NoSuchAlgorithmException e) {
+            } catch (IOException | NoSuchAlgorithmException | InterruptedException e) {
                 e.printStackTrace();
             }
         }).start();

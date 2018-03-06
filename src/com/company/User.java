@@ -32,16 +32,26 @@ public class User {
     }
 
     public void registerToBroker(int brokerPort) throws Exception {
+        System.out.println("Starting to register to broker...");
+
         Socket userSocketToBroker = new Socket("localhost", brokerPort);
 
         DataOutputStream outToBroker = new DataOutputStream(userSocketToBroker.getOutputStream());
         BufferedReader inFromBroker = new BufferedReader(new InputStreamReader(userSocketToBroker.getInputStream()));
 
+        System.out.println("Starting to compute the Diffie Hellman secret...");
+
         final byte[] commonKey = getDiffieHellmanComputedSecret(outToBroker, inFromBroker);
+
+        System.out.printf("Computed the Diffie Hellman secret <%s>.\n\n", Base64.getEncoder().encodeToString(commonKey));
+
+        System.out.println("Sending my identity encrypted to the broker...");
 
         sendEncryptedIdentityToBroker(outToBroker, commonKey);
 
         receiveSignedCertificateFromBroker(inFromBroker);
+
+        System.out.printf("Received the following certificate from the broker <%s>.\n\n", signedCertificateFromBroker);
 
         userSocketToBroker.close();
     }
@@ -72,16 +82,27 @@ public class User {
     }
 
     public void payToSeller(Socket sellerSocket, int amount) throws Exception {
+        System.out.printf("Starting to pay <%d> to the seller associated with the port <%s>...\n\n", amount, sellerSocket);
+
         HashChain hashChain = sellerToHashChain.get(sellerSocket);
 
+        System.out.printf("Current seller hash chain: <%s>\n\n", hashChain);
+
+        byte[] currentDigest = hashChain.computeNextHash(amount);
+
+        System.out.printf("Computed the hash that needs to be sent to the seller: <%s> and update the hash chain <%s> \n\n", Base64.getEncoder().encodeToString(currentDigest), hashChain);
+
         Payment payment = new Payment();
-        payment.setCurrentDigest(hashChain.computeNextHash(amount));
+        payment.setCurrentDigest(currentDigest);
         payment.setCurrentPaymentIndex(hashChain.getCurrentHashIndex());
 
-        DataOutputStream outToSeller = new DataOutputStream(sellerSocket.getOutputStream());
+        System.out.printf("Sending payment <%s> to seller...\n", payment);
 
+        DataOutputStream outToSeller = new DataOutputStream(sellerSocket.getOutputStream());
         outToSeller.writeBytes(objectMapper.writeValueAsString(payment) + "\n");
         outToSeller.flush();
+
+        System.out.printf("Sent the payment <%s> to seller.\n", payment);
     }
 
     private void sendEncryptedIdentityToBroker(DataOutputStream outToBroker, byte[] commonKey) throws NoSuchAlgorithmException, NoSuchPaddingException, InvalidKeyException, IllegalBlockSizeException, BadPaddingException, IOException {

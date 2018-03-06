@@ -13,8 +13,6 @@ public class UserPaymentDetails {
     public void processPayment(Payment payment) throws Exception {
         int amount = payment.getCurrentPaymentIndex() - paymentIndex;
 
-        System.out.println(amount);
-
         byte[] currentHash = lastDigest;
         for (int i = 0; i < amount; i++) {
             currentHash = getMessageDigest().digest(currentHash);

@@ -29,10 +29,6 @@ public class HashChain {
             hashChainList.add(digest);
         }
 
-        for (byte[] arr : hashChainList) {
-            System.out.println(Arrays.toString(arr));
-        }
-
         currentHashIndex = 0;
     }
 
