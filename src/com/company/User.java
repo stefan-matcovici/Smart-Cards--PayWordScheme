@@ -14,6 +14,7 @@ import java.io.*;
 import java.net.Socket;
 import java.security.*;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static com.company.utils.CryptoUtils.buildKeyPair;
 import static com.company.utils.CryptoUtils.getDiffieHellmanComputedSecret;
@@ -21,11 +22,12 @@ import static com.company.utils.CryptoUtils.sign;
 
 public class User {
     private static final int HASH_CHAIN_MAX_SIZE = 100;
+    private static final int[] HASH_CHAINS_SIZES = {9, 6, 5, 1};
     private static final String SELLER_IDENTITY = "SellerIdentity";
     private PrivateKey privateKey;
     private SignedCertificate signedCertificateFromBroker;
     private ObjectMapper objectMapper;
-    private Map<Socket, HashChain> sellerToHashChain = new HashMap<>();
+    private Map<Socket, List<HashChain>> sellerToHashChain = new HashMap<>();
 
     public User() {
         objectMapper = new ObjectMapper();
@@ -51,15 +53,19 @@ public class User {
 
         DataOutputStream outToSeller = new DataOutputStream(userSocketToSeller.getOutputStream());
 
-        HashChain hashChain = new HashChain(HASH_CHAIN_MAX_SIZE);
-
-        sellerToHashChain.put(userSocketToSeller, hashChain);
+        List<HashChain> hashChainList = new ArrayList<>();
+        for (int i : HASH_CHAINS_SIZES) {
+            hashChainList.add(new HashChain(HASH_CHAIN_MAX_SIZE));
+        }
 
         Commit commit = new Commit();
-        commit.setHashChainRoot(hashChain.getHashChainRoot());
+        commit.setHashChainsRoots(hashChainList.stream().map(HashChain::getHashChainRoot).collect(Collectors.toCollection(ArrayList::new)));
         commit.setNumberHashChainElements(HASH_CHAIN_MAX_SIZE);
         commit.setSellerIdentityName(SELLER_IDENTITY);
         commit.setSignedCertificateFromBrokerToUser(signedCertificateFromBroker);
+        commit.setHashChainsValues(HASH_CHAINS_SIZES);
+
+        sellerToHashChain.put(userSocketToSeller, hashChainList);
 
         SignedCommit signedCommit = new SignedCommit();
         signedCommit.setPlainCommit(commit);
@@ -71,12 +77,32 @@ public class User {
         return userSocketToSeller;
     }
 
+    private int[] getCoins(int coinValues[], int amount) {
+        int amounts[] = new int[coinValues.length];
+        int index = 0;
+        for (int value : coinValues) {
+            if (amount >= value) {
+                amounts[index] = amount / value;
+                amount -= ((amount / value) * value);
+                amount = amount % value;
+            }
+            index++;
+        }
+
+        return amounts;
+    }
+
     public void payToSeller(Socket sellerSocket, int amount) throws Exception {
-        HashChain hashChain = sellerToHashChain.get(sellerSocket);
+        List<HashChain> hashChainList = sellerToHashChain.get(sellerSocket);
 
         Payment payment = new Payment();
-        payment.setCurrentDigest(hashChain.computeNextHash(amount));
-        payment.setCurrentPaymentIndex(hashChain.getCurrentHashIndex());
+        int[] values = getCoins(HASH_CHAINS_SIZES, amount);
+        List<byte[]> currentDigests = new ArrayList<>();
+        for (int i = 0; i < values.length; i++) {
+            currentDigests.add(hashChainList.get(i).computeNextHash(values[i]));
+        }
+        payment.setCurrentDigests(currentDigests);
+        payment.setCurrentPaymentIndexes(hashChainList.stream().map(HashChain::getCurrentHashIndex).collect(Collectors.toList()));
 
         DataOutputStream outToSeller = new DataOutputStream(sellerSocket.getOutputStream());
 
@@ -90,7 +116,7 @@ public class User {
         privateKey = keyPair.getPrivate();
 
         byte[] encryptedIdentityString = getEncryptedIdentity(commonKey, pubKey);
-        outToBroker.writeBytes(Base64.getEncoder().encodeToString(encryptedIdentityString) +"\n");
+        outToBroker.writeBytes(Base64.getEncoder().encodeToString(encryptedIdentityString) + "\n");
     }
 
     private void receiveSignedCertificateFromBroker(BufferedReader inFromBroker) throws Exception {

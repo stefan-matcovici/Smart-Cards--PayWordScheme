@@ -7,21 +7,18 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 
+import static com.company.utils.CryptoUtils.getMessageDigest;
+
 public class HashChain {
     private List<byte[]> hashChainList = new ArrayList<>();
-
     private int currentHashIndex;
 
-    private MessageDigest messageDigest;
-
     public HashChain(int chainSize) throws NoSuchAlgorithmException {
-        messageDigest = MessageDigest.getInstance("SHA-256");
-
         final byte[] hashChainRoot = UUID.randomUUID().toString().getBytes();
         hashChainList.add(hashChainRoot);
 
         for (int i = 1; i < chainSize; i++) {
-            final byte[] digest = messageDigest.digest(hashChainList.get(i - 1));
+            final byte[] digest = getMessageDigest().digest(hashChainList.get(i - 1));
 
             hashChainList.add(digest);
         }

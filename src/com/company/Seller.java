@@ -11,8 +11,11 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.ArrayList;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 public class Seller {
 
@@ -42,8 +45,10 @@ public class Seller {
         signedCommit.getPlainCommit().getSignedCertificateFromBrokerToUser().verifySignature();
 
         UserPaymentDetails userPaymentDetails = new UserPaymentDetails();
-        userPaymentDetails.setPaymentIndex(0);
-        userPaymentDetails.setLastDigest(signedCommit.getPlainCommit().getHashChainRoot());
+        userPaymentDetails.setPaymentIndexes(IntStream.of(new int[signedCommit.getPlainCommit().getHashChainsValues().length])
+                .boxed()
+                .collect(Collectors.toCollection(ArrayList::new)));
+        userPaymentDetails.setLastDigests(signedCommit.getPlainCommit().getHashChainsRoots());
         userPaymentDetails.setCommit(signedCommit.getPlainCommit());
 
         lastUserPaymentDetails.put(userConnectionSocket, userPaymentDetails);

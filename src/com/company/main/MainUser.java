@@ -14,8 +14,8 @@ public class MainUser {
         Socket sellerSocket1 = user1.commitToSeller(SELLER_PORT);
 
         user1.payToSeller(sellerSocket1, 10);
-//        user1.payToSeller(sellerSocket1, 20);
-//        user1.payToSeller(sellerSocket1, 50);
+        user1.payToSeller(sellerSocket1, 20);
+        user1.payToSeller(sellerSocket1, 50);
         sellerSocket1.close();
 
 //        User user2 = new User();

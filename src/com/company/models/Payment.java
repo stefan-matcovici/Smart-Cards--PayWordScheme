@@ -1,32 +1,32 @@
 package com.company.models;
 
-import java.util.Arrays;
+import java.util.List;
 
 public class Payment {
-    private byte[] currentDigest;
-    private int currentPaymentIndex;
+    private List<byte[]> currentDigests;
+    private List<Integer> currentPaymentIndexes;
 
-    public byte[] getCurrentDigest() {
-        return currentDigest;
+    public List<byte[]> getCurrentDigests() {
+        return currentDigests;
     }
 
-    public void setCurrentDigest(byte[] currentDigest) {
-        this.currentDigest = currentDigest;
+    public void setCurrentDigests(List<byte[]> currentDigests) {
+        this.currentDigests = currentDigests;
     }
 
-    public int getCurrentPaymentIndex() {
-        return currentPaymentIndex;
+    public void setCurrentPaymentIndexes(List<Integer> currentPaymentIndexes) {
+        this.currentPaymentIndexes = currentPaymentIndexes;
     }
 
-    public void setCurrentPaymentIndex(int currentPaymentIndex) {
-        this.currentPaymentIndex = currentPaymentIndex;
+    public List<Integer> getCurrentPaymentIndexes() {
+        return currentPaymentIndexes;
     }
 
     @Override
     public String toString() {
         return "Payment{" +
-                "currentDigest=" + Arrays.toString(currentDigest) +
-                ", currentPaymentIndex=" + currentPaymentIndex +
+                "currentDigest=" + currentDigests +
+                ", currentPaymentIndex=" + currentPaymentIndexes +
                 '}';
     }
 }

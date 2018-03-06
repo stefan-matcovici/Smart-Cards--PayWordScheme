@@ -1,10 +1,14 @@
 package com.company.models;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class Commit {
     private String sellerIdentityName;
     private SignedCertificate signedCertificateFromBrokerToUser;
-    private byte[] hashChainRoot;
+    private ArrayList<byte[]> hashChainsRoots;
     private int numberHashChainElements;
+    private int[] hashChainsValues;
 
     public String getSellerIdentityName() {
         return sellerIdentityName;
@@ -22,12 +26,12 @@ public class Commit {
         this.signedCertificateFromBrokerToUser = signedCertificateFromBrokerToUser;
     }
 
-    public byte[] getHashChainRoot() {
-        return hashChainRoot;
+    public ArrayList<byte[]> getHashChainsRoots() {
+        return hashChainsRoots;
     }
 
-    public void setHashChainRoot(byte[] hashChainRoot) {
-        this.hashChainRoot = hashChainRoot;
+    public void setHashChainsRoots(ArrayList<byte[]> hashChainsRoots) {
+        this.hashChainsRoots = hashChainsRoots;
     }
 
     public int getNumberHashChainElements() {
@@ -36,5 +40,13 @@ public class Commit {
 
     public void setNumberHashChainElements(int numberHashChainElements) {
         this.numberHashChainElements = numberHashChainElements;
+    }
+
+    public int[] getHashChainsValues() {
+        return hashChainsValues;
+    }
+
+    public void setHashChainsValues(int[] hashChainsValues) {
+        this.hashChainsValues = hashChainsValues;
     }
 }

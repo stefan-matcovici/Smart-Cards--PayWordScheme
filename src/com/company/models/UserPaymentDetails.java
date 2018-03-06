@@ -1,31 +1,46 @@
 package com.company.models;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 
 import static com.company.utils.CryptoUtils.getMessageDigest;
 
 public class UserPaymentDetails {
-    private byte[] lastDigest;
-    private int paymentIndex;
+    private ArrayList<byte[]> lastDigests;
+    private ArrayList<Integer> paymentIndexes;
     private Commit commit;
 
     public void processPayment(Payment payment) throws Exception {
-        int amount = payment.getCurrentPaymentIndex() - paymentIndex;
 
-        System.out.println(amount);
+        int size = payment.getCurrentDigests().size();
+        for (int i = 0; i < size; i++) {
+            int paymentIndex = paymentIndexes.get(i);
+            int amount = payment.getCurrentPaymentIndexes().get(i) - paymentIndex;
 
-        byte[] currentHash = lastDigest;
-        for (int i = 0; i < amount; i++) {
-            currentHash = getMessageDigest().digest(currentHash);
-        }
+            System.out.println(amount);
 
-        if (Arrays.equals(currentHash, payment.getCurrentDigest())) {
-            paymentIndex += amount;
-            lastDigest = Arrays.copyOf(currentHash, currentHash.length);
+            byte[] currentHash = lastDigests.get(i);
+
+            for (int j = 0; j < amount; j++) {
+                currentHash = getMessageDigest().digest(currentHash);
+            }
+
+            if (Arrays.equals(currentHash, payment.getCurrentDigests().get(i))) {
+                paymentIndex += amount;
+                byte[] lastDigest = Arrays.copyOf(currentHash, currentHash.length);
+
+                lastDigests.set(i, lastDigest);
+                paymentIndexes.set(i, paymentIndex);
+
+            } else {
+                throw new Exception("Invalid payment! Hashes don't match!");
+            }
+
         }
-        else {
-            throw new Exception("Invalid payment! Hashes don't match!");
-        }
+    }
+
+    public String computeUserIdentity() {
+        return getCommit().getSignedCertificateFromBrokerToUser().getPlainCertificate().getCertifiedIdentity().getIdentity();
     }
 
     public Commit getCommit() {
@@ -36,30 +51,27 @@ public class UserPaymentDetails {
         this.commit = commit;
     }
 
-    public byte[] getLastDigest() {
-        return lastDigest;
+    public ArrayList<byte[]> getLastDigests() {
+        return lastDigests;
     }
 
-    public void setLastDigest(byte[] lastDigest) {
-        this.lastDigest = lastDigest;
+    public void setLastDigests(ArrayList<byte[]> lastDigests) {
+        this.lastDigests = lastDigests;
     }
 
-    public int getPaymentIndex() {
-        return paymentIndex;
+    public ArrayList<Integer> getPaymentIndexes() {
+        return paymentIndexes;
     }
 
-    public void setPaymentIndex(int paymentIndex) {
-        this.paymentIndex = paymentIndex;
+    public void setPaymentIndexes(ArrayList<Integer> paymentIndexes) {
+        this.paymentIndexes = paymentIndexes;
     }
 
-    public String computeUserIdentity() {
-        return getCommit().getSignedCertificateFromBrokerToUser().getPlainCertificate().getCertifiedIdentity().getIdentity();
-    }
     @Override
     public String toString() {
         return "UserPaymentDetails{" +
-                "lastDigest=" + Arrays.toString(lastDigest) +
-                ", paymentIndex=" + paymentIndex +
+                "lastDigest=" + lastDigests +
+                ", paymentIndex=" + paymentIndexes +
                 ", commit=" + commit +
                 '}';
     }
