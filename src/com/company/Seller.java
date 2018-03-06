@@ -32,6 +32,8 @@ public class Seller {
     }
 
     public Socket receiveCommitFromUser() throws Exception {
+        System.out.println("Receiving commits from users...");
+
         Socket userConnectionSocket = sellerServerSocket.accept();
 
         BufferedReader inFromUser =
@@ -41,7 +43,12 @@ public class Seller {
 
         SignedCommit signedCommit = objectMapper.readValue(inFromUser.readLine(), SignedCommit.class);
 
+        System.out.printf("Received the following signed commit from the user <%s>...\n\n", signedCommit);
+
+        System.out.printf("Verifying the signature from the signed commit <%s>...\n\n", signedCommit);
         signedCommit.verifySignature();
+
+        System.out.printf("Verifying the certificate between the broker and the user <%s>...\n\n", signedCommit.getPlainCommit().getSignedCertificateFromBrokerToUser());
         signedCommit.getPlainCommit().getSignedCertificateFromBrokerToUser().verifySignature();
 
         UserPaymentDetails userPaymentDetails = new UserPaymentDetails();
@@ -51,7 +58,9 @@ public class Seller {
         userPaymentDetails.setLastDigests(signedCommit.getPlainCommit().getHashChainsRoots());
         userPaymentDetails.setCommit(signedCommit.getPlainCommit());
 
+        System.out.printf("Associating a UserPaymentDetails <%s> to the user socket <%s>.\n\n", userPaymentDetails, userConnectionSocket);
         lastUserPaymentDetails.put(userConnectionSocket, userPaymentDetails);
+
         return userConnectionSocket;
     }
 
@@ -60,15 +69,26 @@ public class Seller {
         Thread thread = new Thread(() -> {
             Payment payment;
             try {
+                System.out.printf("Starting to receive payments for user with the socket <%s>...\n\n", userSocket);
 
                 String content = reader.readLine();
                 while (content != null) {
                     payment = objectMapper.readValue(content, Payment.class);
+
+                    System.out.printf("Received the following payment <%s> through user socket <%s>...\n\n", payment, userSocket);
+
                     UserPaymentDetails userPaymentDetails = lastUserPaymentDetails.get(userSocket);
+
+                    System.out.printf("The user with the socket <%s> has the last userPaymentDetails <%s>\n\n", userSocket, userPaymentDetails);
+
+                    System.out.printf("Processing the payment <%s> for the user with the socket <%s>.\n\n", payment, userSocket);
+
                     userPaymentDetails.processPayment(payment);
+
+                    System.out.printf("The new processed userPaymentDetails is now <%s> for the user with the socket <%s>.\n\n", userPaymentDetails, userSocket);
+
                     content = reader.readLine();
                 }
-
                 userSocket.close();
             } catch (Exception e) {
                 e.printStackTrace();
@@ -82,6 +102,8 @@ public class Seller {
         Socket sellerSocketToBroker = new Socket("localhost", SELLER_BROKER_SERVER_PORT);
         DataOutputStream outToBroker = new DataOutputStream(sellerSocketToBroker.getOutputStream());
 
+        System.out.printf("Sending the user payments <%s> to the broker...\n\n", lastUserPaymentDetails);
+
         lastUserPaymentDetails.forEach((key, value) -> {
             try {
                 outToBroker.write(objectMapper.writeValueAsBytes(value));
@@ -89,6 +111,8 @@ public class Seller {
                 e.printStackTrace();
             }
         });
+
+        System.out.printf("Sent the user payments <%s> to the broker...\n\n", lastUserPaymentDetails);
 
         outToBroker.close();
         sellerSocketToBroker.close();

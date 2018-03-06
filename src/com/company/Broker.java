@@ -6,10 +6,7 @@ import com.company.models.Identity;
 import com.company.models.UserPaymentDetails;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
-import javax.crypto.IllegalBlockSizeException;
-import javax.crypto.NoSuchPaddingException;
 import javax.crypto.spec.SecretKeySpec;
 import java.io.BufferedReader;
 import java.io.DataOutputStream;
@@ -50,15 +47,28 @@ public class Broker {
     public void registerUser() throws Exception {
         Socket userConnectionSocket = brokerServerSocket.accept();
 
+        System.out.println("Started to register a new user...");
+
         BufferedReader inFromUser =
                 new BufferedReader(new InputStreamReader(userConnectionSocket.getInputStream()));
         DataOutputStream outToUser = new DataOutputStream(userConnectionSocket.getOutputStream());
 
+        System.out.println("Starting to compute the Diffie Hellman secret...");
+
         byte[] secret = getDiffieHellmanComputedSecret(outToUser, inFromUser);
+
+        System.out.printf("Computed the Diffie Hellman secret <%s>.\n\n", Base64.getEncoder().encodeToString(secret));
+
+        System.out.println("Receiving the encrypted identity from the user...");
 
         Identity identity = receiveUserIdentity(inFromUser, secret);
 
+        System.out.printf("Received the identity <%s> from user.", identity);
+
         SignedCertificate signedCertificate = createSignedCertificate(identity);
+        System.out.printf("Created signed certificate <%s> from identity <%s>.\n\n", signedCertificate, identity);
+
+        System.out.println("Sending certificate to user...");
         outToUser.writeBytes(objectMapper.writeValueAsString(signedCertificate) + "\n");
 
         userConnectionSocket.close();
@@ -70,12 +80,21 @@ public class Broker {
         BufferedReader inFromSeller =
                 new BufferedReader(new InputStreamReader(sellerConnectionSocket.getInputStream()));
 
+        System.out.println("Processing commit from a seller...");
+
         List<UserPaymentDetails> userPaymentDetailsList = new ArrayList<>();
         String content = inFromSeller.readLine();
         while (content != null) {
             UserPaymentDetails readUserPaymentDetails = objectMapper.readValue(content, UserPaymentDetails.class);
+
+            System.out.printf("Got the following user payment: %s\n\n", readUserPaymentDetails.toString());
+
+            System.out.println("Verifying that the seller payment is valid...");
+
             if (isValidPayment(readUserPaymentDetails)) {
                 userPaymentDetailsList.add(readUserPaymentDetails);
+            } else {
+                System.out.printf("The <%s> payment is not valid.\n", userPaymentDetailsList);
             }
 
             content = inFromSeller.readLine();
@@ -83,7 +102,7 @@ public class Broker {
 
         sellersPayments.put(userPaymentDetailsList.get(0).getCommit().getSellerIdentityName(), userPaymentDetailsList);
 
-        System.out.println(sellersPayments);
+        System.out.printf("Processed the commits from user.\n The current seller payments mapping is <%s>\n\n", sellersPayments);
     }
 
     private boolean isValidPayment(UserPaymentDetails userPaymentDetails) throws NoSuchAlgorithmException {
@@ -124,7 +143,7 @@ public class Broker {
         ownIdentity.setPublicKeyByteArray(publicKey.getEncoded());
     }
 
-    private Identity receiveUserIdentity(BufferedReader inFromUser, byte[] secret) throws IOException, NoSuchAlgorithmException, NoSuchPaddingException, InvalidKeyException, IllegalBlockSizeException, BadPaddingException {
+    private Identity receiveUserIdentity(BufferedReader inFromUser, byte[] secret) throws Exception {
         byte[] encryptedIdentity = Base64.getDecoder().decode(inFromUser.readLine());
         SecretKeySpec keySpec = new SecretKeySpec(secret, "AES");
         Cipher cipher = Cipher.getInstance("AES");

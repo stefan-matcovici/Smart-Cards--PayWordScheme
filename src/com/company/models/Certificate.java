@@ -19,4 +19,12 @@ public class Certificate {
     public void setCertifierIdentity(Identity certifierIdentity) {
         this.certifierIdentity = certifierIdentity;
     }
+
+    @Override
+    public String toString() {
+        return "Certificate{" +
+                "certifiedIdentity=" + certifiedIdentity +
+                ", certifierIdentity=" + certifierIdentity +
+                '}';
+    }
 }

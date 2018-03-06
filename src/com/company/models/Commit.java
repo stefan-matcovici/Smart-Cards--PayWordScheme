@@ -1,7 +1,8 @@
 package com.company.models;
 
 import java.util.ArrayList;
-import java.util.List;
+import java.util.Base64;
+import java.util.stream.Collectors;
 
 public class Commit {
     private String sellerIdentityName;
@@ -48,5 +49,15 @@ public class Commit {
 
     public void setHashChainsValues(int[] hashChainsValues) {
         this.hashChainsValues = hashChainsValues;
+    }
+
+    @Override
+    public String toString() {
+        return "Commit{" +
+                "sellerIdentityName='" + sellerIdentityName + '\'' +
+                ", signedCertificateFromBrokerToUser=" + signedCertificateFromBrokerToUser +
+                ", hashChainRoot=" + hashChainsRoots.stream().map(Base64.getEncoder()::encodeToString).collect(Collectors.joining(", ")) +
+                ", numberHashChainElements=" + numberHashChainElements +
+                '}';
     }
 }

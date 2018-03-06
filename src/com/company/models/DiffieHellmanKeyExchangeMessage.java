@@ -5,6 +5,7 @@ import java.security.NoSuchAlgorithmException;
 import java.security.PublicKey;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.X509EncodedKeySpec;
+import java.util.Base64;
 
 public class DiffieHellmanKeyExchangeMessage {
     private byte[] publicKeyByteArray;
@@ -30,5 +31,13 @@ public class DiffieHellmanKeyExchangeMessage {
         X509EncodedKeySpec ks = new X509EncodedKeySpec(publicKeyByteArray);
         KeyFactory kf = KeyFactory.getInstance(algorithm);
         return kf.generatePublic(ks);
+    }
+
+    @Override
+    public String toString() {
+        return "DiffieHellmanKeyExchangeMessage{" +
+                "publicKeyByteArray=" + Base64.getEncoder().encodeToString(publicKeyByteArray) +
+                ", algorithm='" + algorithm + '\'' +
+                '}';
     }
 }

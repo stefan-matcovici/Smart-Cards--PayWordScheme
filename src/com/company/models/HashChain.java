@@ -4,8 +4,11 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Base64;
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collector;
+import java.util.stream.Collectors;
 
 import static com.company.utils.CryptoUtils.getMessageDigest;
 
@@ -21,10 +24,6 @@ public class HashChain {
             final byte[] digest = getMessageDigest().digest(hashChainList.get(i - 1));
 
             hashChainList.add(digest);
-        }
-
-        for (byte[] arr : hashChainList) {
-            System.out.println(Arrays.toString(arr));
         }
 
         currentHashIndex = 0;
@@ -47,4 +46,13 @@ public class HashChain {
         return currentHashIndex;
     }
 
+    @Override
+    public String toString() {
+        return "HashChain{" +
+                "hashChainList=" + hashChainList.stream()
+                .map(bytes -> Base64.getEncoder().encodeToString(bytes))
+                .collect(Collectors.toList())+
+                ", currentHashIndex=" + currentHashIndex +
+                '}';
+    }
 }

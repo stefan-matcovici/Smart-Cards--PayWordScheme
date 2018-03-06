@@ -1,6 +1,9 @@
 package com.company.models;
 
+
+import java.util.Base64;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class Payment {
     private List<byte[]> currentDigests;
@@ -27,6 +30,8 @@ public class Payment {
         return "Payment{" +
                 "currentDigest=" + currentDigests +
                 ", currentPaymentIndex=" + currentPaymentIndexes +
+                "currentDigest=" + currentDigests.stream().map(Base64.getEncoder()::encodeToString).collect(Collectors.joining(", ")) +
+                ", currentPaymentIndex=" + currentPaymentIndexes.stream().map(String::valueOf).collect(Collectors.joining(", ")) +
                 '}';
     }
 }

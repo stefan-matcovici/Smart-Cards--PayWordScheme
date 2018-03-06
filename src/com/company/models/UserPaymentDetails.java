@@ -2,6 +2,8 @@ package com.company.models;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Base64;
+import java.util.stream.Collectors;
 
 import static com.company.utils.CryptoUtils.getMessageDigest;
 
@@ -11,7 +13,6 @@ public class UserPaymentDetails {
     private Commit commit;
 
     public void processPayment(Payment payment) throws Exception {
-
         int size = payment.getCurrentDigests().size();
         for (int i = 0; i < size; i++) {
             int paymentIndex = paymentIndexes.get(i);
@@ -72,6 +73,8 @@ public class UserPaymentDetails {
         return "UserPaymentDetails{" +
                 "lastDigest=" + lastDigests +
                 ", paymentIndex=" + paymentIndexes +
+                "lastDigest=" + lastDigests.stream().map(Base64.getEncoder()::encodeToString).collect(Collectors.joining(", ")) +
+                ", paymentIndex=" + paymentIndexes.stream().map(String::valueOf).collect(Collectors.joining(", ")) +
                 ", commit=" + commit +
                 '}';
     }
