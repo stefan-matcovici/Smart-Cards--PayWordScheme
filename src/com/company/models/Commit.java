@@ -1,15 +1,11 @@
 package com.company.models;
 
-import java.util.ArrayList;
-import java.util.Base64;
-import java.util.stream.Collectors;
+import java.util.List;
 
 public class Commit {
     private String sellerIdentityName;
     private SignedCertificate signedCertificateFromBrokerToUser;
-    private ArrayList<byte[]> hashChainsRoots;
-    private int numberHashChainElements;
-    private int[] hashChainsValues;
+    private List<HashChainCommit> hashChainCommits;
 
     public String getSellerIdentityName() {
         return sellerIdentityName;
@@ -27,28 +23,12 @@ public class Commit {
         this.signedCertificateFromBrokerToUser = signedCertificateFromBrokerToUser;
     }
 
-    public ArrayList<byte[]> getHashChainsRoots() {
-        return hashChainsRoots;
+    public List<HashChainCommit> getHashChainCommits() {
+        return hashChainCommits;
     }
 
-    public void setHashChainsRoots(ArrayList<byte[]> hashChainsRoots) {
-        this.hashChainsRoots = hashChainsRoots;
-    }
-
-    public int getNumberHashChainElements() {
-        return numberHashChainElements;
-    }
-
-    public void setNumberHashChainElements(int numberHashChainElements) {
-        this.numberHashChainElements = numberHashChainElements;
-    }
-
-    public int[] getHashChainsValues() {
-        return hashChainsValues;
-    }
-
-    public void setHashChainsValues(int[] hashChainsValues) {
-        this.hashChainsValues = hashChainsValues;
+    public void setHashChainCommits(List<HashChainCommit> hashChainCommits) {
+        this.hashChainCommits = hashChainCommits;
     }
 
     @Override
@@ -56,8 +36,7 @@ public class Commit {
         return "Commit{" +
                 "sellerIdentityName='" + sellerIdentityName + '\'' +
                 ", signedCertificateFromBrokerToUser=" + signedCertificateFromBrokerToUser +
-                ", hashChainRoot=[" + hashChainsRoots.stream().map(Base64.getEncoder()::encodeToString).collect(Collectors.joining(", ")) +
-                "], numberHashChainElements=" + numberHashChainElements +
+                ", hashChainCommits=" + hashChainCommits +
                 '}';
     }
 }

@@ -1,38 +1,37 @@
 package com.company.models;
 
-import java.util.ArrayList;
+
 import java.util.Arrays;
-import java.util.Base64;
-import java.util.stream.Collectors;
+import java.util.List;
 
 import static com.company.utils.CryptoUtils.getMessageDigest;
 
 public class UserPaymentDetails {
-    private ArrayList<byte[]> lastDigests;
-    private ArrayList<Integer> paymentIndexes;
+    private PaymentWithDifferentValues payments;
     private Commit commit;
 
-    public void processPayment(Payment payment) throws Exception {
-        int size = payment.getCurrentDigests().size();
-        for (int i = 0; i < size; i++) {
-            int paymentIndex = paymentIndexes.get(i);
-            int amount = payment.getCurrentPaymentIndexes().get(i) - paymentIndex;
+    public void processPaymentWithDifferentValues(PaymentWithDifferentValues paymentWithDifferentValues) throws Exception {
+        List<Payment> currentPayments = payments.getPaymentsWithDifferentValues();
+        List<Payment> receivedPayments = paymentWithDifferentValues.getPaymentsWithDifferentValues();
+
+        for (int i = 0; i< currentPayments.size(); i++) {
+            int paymentIndex = currentPayments.get(i).getCurrentPaymentIndex();
+            int amount = receivedPayments.get(i).getCurrentPaymentIndex() - paymentIndex;
 
             System.out.println(amount);
 
-            byte[] currentHash = lastDigests.get(i);
+            byte[] currentHash = currentPayments.get(i).getCurrentDigest();
 
             for (int j = 0; j < amount; j++) {
                 currentHash = getMessageDigest().digest(currentHash);
             }
 
-            if (Arrays.equals(currentHash, payment.getCurrentDigests().get(i))) {
+            if (Arrays.equals(currentHash, receivedPayments.get(i).getCurrentDigest())) {
                 paymentIndex += amount;
                 byte[] lastDigest = Arrays.copyOf(currentHash, currentHash.length);
 
-                lastDigests.set(i, lastDigest);
-                paymentIndexes.set(i, paymentIndex);
-
+                payments.getPaymentsWithDifferentValues().get(i).setCurrentDigest(lastDigest);
+                payments.getPaymentsWithDifferentValues().get(i).setCurrentPaymentIndex(paymentIndex);
             } else {
                 throw new Exception("Invalid payment! Hashes don't match!");
             }
@@ -44,6 +43,14 @@ public class UserPaymentDetails {
         return getCommit().getSignedCertificateFromBrokerToUser().getPlainCertificate().getCertifiedIdentity().getIdentity();
     }
 
+    public PaymentWithDifferentValues getPayments() {
+        return payments;
+    }
+
+    public void setPayments(PaymentWithDifferentValues payments) {
+        this.payments = payments;
+    }
+
     public Commit getCommit() {
         return commit;
     }
@@ -52,28 +59,11 @@ public class UserPaymentDetails {
         this.commit = commit;
     }
 
-    public ArrayList<byte[]> getLastDigests() {
-        return lastDigests;
-    }
-
-    public void setLastDigests(ArrayList<byte[]> lastDigests) {
-        this.lastDigests = lastDigests;
-    }
-
-    public ArrayList<Integer> getPaymentIndexes() {
-        return paymentIndexes;
-    }
-
-    public void setPaymentIndexes(ArrayList<Integer> paymentIndexes) {
-        this.paymentIndexes = paymentIndexes;
-    }
-
     @Override
     public String toString() {
         return "UserPaymentDetails{" +
-                ", lastDigests=[" + lastDigests.stream().map(Base64.getEncoder()::encodeToString).collect(Collectors.joining(", ")) +
-                "], paymentIndex=[" + paymentIndexes.stream().map(String::valueOf).collect(Collectors.joining(", ")) +
-                "], commit=" + commit +
+                "payments=" + payments +
+                ", commit=" + commit +
                 '}';
     }
 }

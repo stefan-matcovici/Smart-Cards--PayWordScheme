@@ -7,13 +7,10 @@ import javax.crypto.KeyAgreement;
 import java.io.BufferedReader;
 import java.io.DataOutputStream;
 import java.io.IOException;
-import java.math.BigInteger;
 import java.security.*;
 import java.security.spec.InvalidKeySpecException;
 
 public class CryptoUtils {
-    private static BigInteger g512 = new BigInteger("1234567890", 16);
-    private static BigInteger p512 = new BigInteger("1234567890", 16);
     private static MessageDigest messageDigest;
 
     static {

@@ -1,6 +1,9 @@
 package com.company;
 
+import com.company.models.Commit;
+import com.company.models.HashChainCommit;
 import com.company.models.Payment;
+import com.company.models.PaymentWithDifferentValues;
 import com.company.models.SignedCommit;
 import com.company.models.UserPaymentDetails;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -12,6 +15,7 @@ import java.io.InputStreamReader;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
@@ -51,12 +55,25 @@ public class Seller {
         System.out.printf("Verifying the certificate between the broker and the user <%s>...\n\n", signedCommit.getPlainCommit().getSignedCertificateFromBrokerToUser());
         signedCommit.getPlainCommit().getSignedCertificateFromBrokerToUser().verifySignature();
 
+        Commit commit = signedCommit.getPlainCommit();
+
         UserPaymentDetails userPaymentDetails = new UserPaymentDetails();
-        userPaymentDetails.setPaymentIndexes(IntStream.of(new int[signedCommit.getPlainCommit().getHashChainsValues().length])
-                .boxed()
-                .collect(Collectors.toCollection(ArrayList::new)));
-        userPaymentDetails.setLastDigests(signedCommit.getPlainCommit().getHashChainsRoots());
-        userPaymentDetails.setCommit(signedCommit.getPlainCommit());
+
+        List<Payment> payments = new ArrayList<>();
+        for (HashChainCommit hashChainCommit: commit.getHashChainCommits()) {
+            Payment payment = new Payment();
+            payment.setCurrentDigest(hashChainCommit.getHashChainRoot());
+            payment.setCurrentPaymentIndex(0);
+            payment.setPaymentValue(hashChainCommit.getValue());
+
+            payments.add(payment);
+        }
+
+        PaymentWithDifferentValues paymentWithDifferentValues = new PaymentWithDifferentValues();
+        paymentWithDifferentValues.setPaymentsWithDifferentValues(payments);
+
+        userPaymentDetails.setPayments(paymentWithDifferentValues);
+        userPaymentDetails.setCommit(commit);
 
         System.out.printf("Associating a UserPaymentDetails <%s> to the user socket <%s>.\n\n", userPaymentDetails, userConnectionSocket);
         lastUserPaymentDetails.put(userConnectionSocket, userPaymentDetails);
@@ -67,13 +84,13 @@ public class Seller {
     public void receivePaymentsFromUser(Socket userSocket) throws Exception {
         BufferedReader reader = userReaders.get(userSocket);
         Thread thread = new Thread(() -> {
-            Payment payment;
+            PaymentWithDifferentValues payment;
             try {
                 System.out.printf("Starting to receive payments for user with the socket <%s>...\n\n", userSocket);
 
                 String content = reader.readLine();
                 while (content != null) {
-                    payment = objectMapper.readValue(content, Payment.class);
+                    payment = objectMapper.readValue(content, PaymentWithDifferentValues.class);
 
                     System.out.printf("Received the following payment <%s> through user socket <%s>...\n\n", payment, userSocket);
 
@@ -83,7 +100,7 @@ public class Seller {
 
                     System.out.printf("Processing the payment <%s> for the user with the socket <%s>.\n\n", payment, userSocket);
 
-                    userPaymentDetails.processPayment(payment);
+                    userPaymentDetails.processPaymentWithDifferentValues(payment);
 
                     System.out.printf("The new processed userPaymentDetails is now <%s> for the user with the socket <%s>.\n\n", userPaymentDetails, userSocket);
 

@@ -58,22 +58,30 @@ public class User {
         userSocketToBroker.close();
     }
 
-    public Socket commitToSeller(int sellerPort) throws Exception {
+    public Socket commitToSeller(int sellerPort, List<Integer> hashChainValues, List<Integer> hashChainSizes) throws Exception {
         Socket userSocketToSeller = new Socket("localhost", sellerPort);
 
         DataOutputStream outToSeller = new DataOutputStream(userSocketToSeller.getOutputStream());
 
+        List<HashChainCommit> hashChainCommitList = new ArrayList<>();
         List<HashChain> hashChainList = new ArrayList<>();
-        for (int i : HASH_CHAINS_SIZES) {
-            hashChainList.add(new HashChain(HASH_CHAIN_MAX_SIZE));
+        for (int i = 0; i < hashChainValues.size(); i++) {
+            HashChain hashChain = new HashChain(hashChainSizes.get(i), hashChainValues.get(i));
+            hashChainList.add(hashChain);
+
+            HashChainCommit hashChainCommit = new HashChainCommit();
+            hashChainCommit.setValue(hashChain.getValue());
+            hashChainCommit.setHashChainRoot(hashChain.getHashChainRoot());
+            hashChainCommit.setNumberHashChainElements(hashChain.getHashChainSize());
+
+            hashChainCommitList.add(hashChainCommit);
         }
 
+
         Commit commit = new Commit();
-        commit.setHashChainsRoots(hashChainList.stream().map(HashChain::getHashChainRoot).collect(Collectors.toCollection(ArrayList::new)));
-        commit.setNumberHashChainElements(HASH_CHAIN_MAX_SIZE);
         commit.setSellerIdentityName(SELLER_IDENTITY);
         commit.setSignedCertificateFromBrokerToUser(signedCertificateFromBroker);
-        commit.setHashChainsValues(HASH_CHAINS_SIZES);
+        commit.setHashChainCommits(hashChainCommitList);
 
         sellerToHashChain.put(userSocketToSeller, hashChainList);
 
@@ -87,19 +95,27 @@ public class User {
         return userSocketToSeller;
     }
 
-    private int[] getCoins(int coinValues[], int amount) {
-        int amounts[] = new int[coinValues.length];
-        int index = 0;
-        for (int value : coinValues) {
+    private List<Payment> getPayments(List<HashChain> hashChains, int amount) throws Exception {
+        List<Payment> payments = new ArrayList<>();
+        for (HashChain hashChain: hashChains) {
+            Payment payment = new Payment();
+            payment.setPaymentValue(hashChain.getValue());
+
+            int value = hashChain.getValue();
+
             if (amount >= value) {
-                amounts[index] = amount / value;
+                payment.setCurrentDigest(hashChain.computeNextHash(amount / value));
                 amount -= ((amount / value) * value);
                 amount = amount % value;
             }
-            index++;
+
+            payment.setCurrentDigest(hashChain.computeNextHash(0));
+            payment.setCurrentPaymentIndex(hashChain.getCurrentHashIndex());
+
+            payments.add(payment);
         }
 
-        return amounts;
+        return payments;
     }
 
     public void payToSeller(Socket sellerSocket, int amount) throws Exception {
@@ -108,25 +124,16 @@ public class User {
 
         System.out.printf("Current seller hash chain: <%s>\n\n", hashChainList.stream().map(HashChain::toString).collect(Collectors.joining(", ")));
 
-        int[] values = getCoins(HASH_CHAINS_SIZES, amount);
-        List<byte[]> currentDigests = new ArrayList<>();
-        for (int i = 0; i < values.length; i++) {
-            currentDigests.add(hashChainList.get(i).computeNextHash(values[i]));
-        }
+        PaymentWithDifferentValues paymentWithDifferentValues = new PaymentWithDifferentValues();
+        paymentWithDifferentValues.setPaymentsWithDifferentValues(getPayments(hashChainList, amount));
 
-        System.out.printf("Computed the hash that needs to be sent to the seller: [<%s>] and update the hash chain [<%s>] \n\n", currentDigests.stream().map(Base64.getEncoder()::encodeToString).collect(Collectors.joining(", ")), hashChainList.stream().map(String::valueOf).collect(Collectors.joining(", ")));
-
-        Payment payment = new Payment();
-        payment.setCurrentDigests(currentDigests);
-        payment.setCurrentPaymentIndexes(hashChainList.stream().map(HashChain::getCurrentHashIndex).collect(Collectors.toList()));
-
-        System.out.printf("Sending payment <%s> to seller...\n", payment);
+        System.out.printf("Sending payment <%s> to seller...\n", paymentWithDifferentValues);
 
         DataOutputStream outToSeller = new DataOutputStream(sellerSocket.getOutputStream());
-        outToSeller.writeBytes(objectMapper.writeValueAsString(payment) + "\n");
+        outToSeller.writeBytes(objectMapper.writeValueAsString(paymentWithDifferentValues) + "\n");
         outToSeller.flush();
 
-        System.out.printf("Sent the payment <%s> to seller.\n", payment);
+        System.out.printf("Sent the payment <%s> to seller.\n", paymentWithDifferentValues);
     }
 
     private void sendEncryptedIdentityToBroker(DataOutputStream outToBroker, byte[] commonKey) throws NoSuchAlgorithmException, NoSuchPaddingException, InvalidKeyException, IllegalBlockSizeException, BadPaddingException, IOException {

@@ -1,35 +1,42 @@
 package com.company.models;
 
-
 import java.util.Base64;
-import java.util.List;
-import java.util.stream.Collectors;
 
 public class Payment {
-    private List<byte[]> currentDigests;
-    private List<Integer> currentPaymentIndexes;
+    private byte[] currentDigest;
+    private Integer currentPaymentIndex;
+    private int paymentValue;
 
-    public List<byte[]> getCurrentDigests() {
-        return currentDigests;
+    public byte[] getCurrentDigest() {
+        return currentDigest;
     }
 
-    public void setCurrentDigests(List<byte[]> currentDigests) {
-        this.currentDigests = currentDigests;
+    public void setCurrentDigest(byte[] currentDigest) {
+        this.currentDigest = currentDigest;
     }
 
-    public void setCurrentPaymentIndexes(List<Integer> currentPaymentIndexes) {
-        this.currentPaymentIndexes = currentPaymentIndexes;
+    public Integer getCurrentPaymentIndex() {
+        return currentPaymentIndex;
     }
 
-    public List<Integer> getCurrentPaymentIndexes() {
-        return currentPaymentIndexes;
+    public void setCurrentPaymentIndex(Integer currentPaymentIndex) {
+        this.currentPaymentIndex = currentPaymentIndex;
+    }
+
+    public int getPaymentValue() {
+        return paymentValue;
+    }
+
+    public void setPaymentValue(int paymentValue) {
+        this.paymentValue = paymentValue;
     }
 
     @Override
     public String toString() {
         return "Payment{" +
-                "currentDigests=[" + currentDigests.stream().map(Base64.getEncoder()::encodeToString).collect(Collectors.joining(", ")) +
-                "], currentPaymentIndexes=[" + currentPaymentIndexes.stream().map(String::valueOf).collect(Collectors.joining(", ")) +
-                "]}";
+                "currentDigest=" + Base64.getEncoder().encodeToString(currentDigest) +
+                ", currentPaymentIndex=" + currentPaymentIndex +
+                ", paymentValue=" + paymentValue +
+                '}';
     }
 }

@@ -3,6 +3,7 @@ package com.company.main;
 import com.company.User;
 
 import java.net.Socket;
+import java.util.Arrays;
 
 public class MainUser {
     private static final int BROKER_SERVER_PORT = 6789;
@@ -11,10 +12,8 @@ public class MainUser {
     public static void main(String[] args) throws Exception {
         User user1 = new User();
         user1.registerToBroker(BROKER_SERVER_PORT);
-        Socket sellerSocket1 = user1.commitToSeller(SELLER_PORT);
+        Socket sellerSocket1 = user1.commitToSeller(SELLER_PORT, Arrays.asList(9 , 6, 5, 1), Arrays.asList(100, 100, 100, 100));
 
-        user1.payToSeller(sellerSocket1, 10);
-        user1.payToSeller(sellerSocket1, 20);
         user1.payToSeller(sellerSocket1, 50);
         sellerSocket1.close();
 

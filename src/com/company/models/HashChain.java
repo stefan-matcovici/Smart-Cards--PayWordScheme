@@ -1,13 +1,10 @@
 package com.company.models;
 
-import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Base64;
 import java.util.List;
 import java.util.UUID;
-import java.util.stream.Collector;
 import java.util.stream.Collectors;
 
 import static com.company.utils.CryptoUtils.getMessageDigest;
@@ -15,8 +12,10 @@ import static com.company.utils.CryptoUtils.getMessageDigest;
 public class HashChain {
     private List<byte[]> hashChainList = new ArrayList<>();
     private int currentHashIndex;
+    private int value;
+    private int hashChainSize;
 
-    public HashChain(int chainSize) throws NoSuchAlgorithmException {
+    public HashChain(int chainSize, int value) throws NoSuchAlgorithmException {
         final byte[] hashChainRoot = UUID.randomUUID().toString().getBytes();
         hashChainList.add(hashChainRoot);
 
@@ -27,6 +26,10 @@ public class HashChain {
         }
 
         currentHashIndex = 0;
+
+        this.hashChainSize = chainSize;
+
+        this.value = value;
     }
 
     public byte[] computeNextHash(int amount) throws Exception {
@@ -46,11 +49,29 @@ public class HashChain {
         return currentHashIndex;
     }
 
+    public int getValue() {
+        return value;
+    }
+
+    public void setValue(int value) {
+        this.value = value;
+    }
+
+    public int getHashChainSize() {
+        return hashChainSize;
+    }
+
+    public void setHashChainSize(int hashChainSize) {
+        this.hashChainSize = hashChainSize;
+    }
+
     @Override
     public String toString() {
         return "HashChain{" +
-                "hashChainList=[" + hashChainList.stream().map(bytes -> Base64.getEncoder().encodeToString(bytes)).collect(Collectors.toList()) +
-                "], currentHashIndex=" + currentHashIndex +
+                "hashChainList=" + hashChainList.stream().map(bytes -> Base64.getEncoder().encodeToString(bytes)).collect(Collectors.toList()) +
+                ", currentHashIndex=" + currentHashIndex +
+                ", value=" + value +
+                ", hashChainSize=" + hashChainSize +
                 '}';
     }
 }

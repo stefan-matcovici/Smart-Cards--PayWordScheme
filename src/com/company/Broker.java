@@ -1,6 +1,8 @@
 package com.company;
 
 import com.company.models.Certificate;
+import com.company.models.Payment;
+import com.company.models.PaymentWithDifferentValues;
 import com.company.models.SignedCertificate;
 import com.company.models.Identity;
 import com.company.models.UserPaymentDetails;
@@ -21,7 +23,6 @@ import java.util.Base64;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 
 import static com.company.utils.CryptoUtils.*;
 
@@ -33,7 +34,7 @@ public class Broker {
     private Identity ownIdentity;
     private PrivateKey privateKey;
     private ObjectMapper objectMapper;
-    private Map<String, List<UserPaymentDetails>> sellersPayments = new HashMap<>();
+    private Map<String, Map<String, UserPaymentDetails>> sellersPayments = new HashMap<>();
 
     public Broker() throws IOException, NoSuchAlgorithmException {
         brokerServerSocket = new ServerSocket(BROKER_SERVER_PORT);
@@ -82,8 +83,9 @@ public class Broker {
 
         System.out.println("Processing commit from a seller...");
 
-        List<UserPaymentDetails> userPaymentDetailsList = new ArrayList<>();
+        Map<String, UserPaymentDetails> userPaymentDetailsMap = new HashMap<>();
         String content = inFromSeller.readLine();
+        String sellerIdentity = null;
         while (content != null) {
             UserPaymentDetails readUserPaymentDetails = objectMapper.readValue(content, UserPaymentDetails.class);
 
@@ -92,43 +94,59 @@ public class Broker {
             System.out.println("Verifying that the seller payment is valid...");
 
             if (isValidPayment(readUserPaymentDetails)) {
-                userPaymentDetailsList.add(readUserPaymentDetails);
+                String userIdentity = readUserPaymentDetails.getCommit().getSignedCertificateFromBrokerToUser().getPlainCertificate().getCertifiedIdentity().getIdentity();
+                userPaymentDetailsMap.put(userIdentity, readUserPaymentDetails);
+                sellerIdentity = readUserPaymentDetails.getCommit().getSellerIdentityName();
             } else {
-                System.out.printf("The <%s> payment is not valid.\n", userPaymentDetailsList);
+                System.out.printf("The <%s> payment is not valid.\n", userPaymentDetailsMap);
             }
 
             content = inFromSeller.readLine();
         }
 
-        sellersPayments.put(userPaymentDetailsList.get(0).getCommit().getSellerIdentityName(), userPaymentDetailsList);
+        sellersPayments.put(sellerIdentity, userPaymentDetailsMap);
 
         System.out.printf("Processed the commits from user.\n The current seller payments mapping is <%s>\n\n", sellersPayments);
     }
 
     private boolean isValidPayment(UserPaymentDetails userPaymentDetails) throws NoSuchAlgorithmException {
-//        final int[] lastIndex = {0};
-//        final byte[][] lastDigest = {null};
-//        if (sellersPayments.containsKey(userPaymentDetails.getCommit().getSellerIdentityName())) {
-//            sellersPayments.get(userPaymentDetails.getCommit().getSellerIdentityName())
-//                    .stream()
-//                    .filter(userPaymentDetails1 ->
-//                            Objects.equals(userPaymentDetails1.computeUserIdentity(), userPaymentDetails.computeUserIdentity()))
-//                    .findAny()
-//                    .ifPresent(userPaymentDetails1 -> {
-//                        lastIndex[0] = userPaymentDetails1.getPaymentIndex();
-//                        lastDigest[0] = userPaymentDetails1.getLastDigest();
-//                    });
-//        } else {
-//            lastIndex[0] = 0;
-//            lastDigest[0] = userPaymentDetails.getCommit().getHashChainRoot();
-//        }
-//
-//        byte[] currentHash = lastDigest[0];
-//        for (int i = 0; i < userPaymentDetails.getPaymentIndex() - lastIndex[0]; i++) {
-//            currentHash = getMessageDigest().digest(currentHash);
-//        }
-//
-//        return Arrays.equals(currentHash, userPaymentDetails.getLastDigest());
+        PaymentWithDifferentValues newPaymentWithDifferentValues = userPaymentDetails.getPayments();
+        sellersPayments.computeIfAbsent(userPaymentDetails.getCommit().getSellerIdentityName(), k -> new HashMap<>());
+        sellersPayments.get(userPaymentDetails.getCommit().getSellerIdentityName())
+                .putIfAbsent(userPaymentDetails
+                                .getCommit()
+                                .getSignedCertificateFromBrokerToUser()
+                                .getPlainCertificate()
+                                .getCertifiedIdentity()
+                                .getIdentity()
+                        , userPaymentDetails);
+
+        PaymentWithDifferentValues currentPaymentWithDifferentValues = sellersPayments.get(userPaymentDetails.getCommit().getSellerIdentityName())
+                .get(userPaymentDetails
+                        .getCommit()
+                        .getSignedCertificateFromBrokerToUser()
+                        .getPlainCertificate()
+                        .getCertifiedIdentity()
+                        .getIdentity()
+                ).getPayments();
+
+        for (int i = 0; i < newPaymentWithDifferentValues.getPaymentsWithDifferentValues().size(); i++) {
+            byte[] currentHash = currentPaymentWithDifferentValues.getPaymentsWithDifferentValues().get(i).getCurrentDigest();
+            int amount = newPaymentWithDifferentValues.getPaymentsWithDifferentValues().get(i).getCurrentPaymentIndex() -
+                    currentPaymentWithDifferentValues.getPaymentsWithDifferentValues().get(i).getCurrentPaymentIndex();
+
+            if (amount < 0) {
+                throw new RuntimeException("The seller cannot send payments with negative amounts.");
+            }
+
+            for (int j = 0; j < amount; j++) {
+                currentHash = getMessageDigest().digest(currentHash);
+            }
+
+            if (!Arrays.equals(currentHash, newPaymentWithDifferentValues.getPaymentsWithDifferentValues().get(i).getCurrentDigest())) {
+                return false;
+            }
+        }
 
         return true;
     }
